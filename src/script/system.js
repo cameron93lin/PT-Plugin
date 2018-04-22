@@ -93,7 +93,6 @@ let system = {
         }
         render();
     },  // 扩展插件动态加载
-
     renderNav() {
         $("ul.nav > li").click(function () {
             let tag = $(this);
@@ -125,8 +124,8 @@ let system = {
     renderBtClient() {},
     renderSite() {},
     renderOther() {
-        $("input#config-file").change(() => {
-            let restoreFile = $("#config-file")[0];
+        $("input#file-config").change(() => {
+            let restoreFile = $("#file-config")[0];
             if (restoreFile.files.length > 0 && restoreFile.files[0].name.length > 0) {
                 let r = new FileReader();
                 r.onload = function (e) {
@@ -173,9 +172,9 @@ let system = {
         });  // 从文件中恢复
         $("button#button-config-restore").click(() => {
             system.config = system.config_default;
-            system.initConfig();
             system.saveConfig(true);
             system.showSuccessMsg("已重置到默认状态");
+            system.initOptionPage();
         });  // 重置到默认状态
         $("button#button-log-export").click(() => {
             system.saveFileAs("PT-plugin-log.log", system.log.join("\n"),{"type": "text/plain","endings": "native"});
@@ -246,6 +245,10 @@ let system = {
 
     showMessage: (msg,options) => {
         new $.zui.Messager(msg, options || {}).show(); // 优先使用传入的options
+    },
+
+    showSuccessMsg: msg => {
+        system.showMessage(msg,{icon: 'bell'});
     },
 
     showInfoMessage:  msg => {

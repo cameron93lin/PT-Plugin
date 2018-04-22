@@ -57,12 +57,25 @@ let system = {
         }
     },
 
-    initExtension() {
+    ConfigRewriteExtension() {
+        system.config.extension = $("#config-extension > div").map((i,item) => {
+            let rObj = {};
+            let tag = $(item);
+            rObj["enable"] = tag.find("input[type='checkbox']").prop("checked");
+            rObj["name"] = tag.attr("data-name");
+            rObj["script"] = tag.attr("data-script");
+            return rObj;
+        }).get();
+        system.renderExtension();  // 重新加载插件
+        system.saveConfig(true);   // 重写插件设置并保存
+    },  // 扩展插件（底层）
+
+    renderExtension() {
         function render() {
             // 左侧Nav导航以及插件的DOM元素
             $("ul#nav-extension").html(system.config.extension.reduce((a,b) => {
                 if (b.enable) {
-                    $.getScript(`extension/${b.script}.js`,() => {system.AddNavListener();});
+                    $.getScript(`extension/${b.script}.js`,() => {system.renderNav();});
                     a += `<li><a href="#" data-target="#tab-extension-${b.script}">${b.name}</a></li>`
                 }
                 return a;
@@ -78,35 +91,19 @@ let system = {
             $.getJSON("extension/init.json",data => {
                 system.config.extension = data.extension;
                 render();
-            });
+            });  // 加载默认插件
         } else {
             render();
         }
     },  // 扩展插件动态加载
 
-    ConfigRewriteExtension() {
-        system.config.extension = $("#config-extension > div").map((i,item) => {
-            let rObj = {};
-            let tag = $(item);
-            rObj["enable"] = tag.find("input[type='checkbox']").prop("checked");
-            rObj["name"] = tag.attr("data-name");
-            rObj["script"] = tag.attr("data-script");
-            return rObj;
-        }).get();
-        system.initExtension();
-        system.saveConfig(true);
-    },  // 重写扩展插件配置
-
-
-    AddNavListener() {
-
+    renderNav() {
         $("ul.nav > li").click(function () {
-
             let tag = $(this);
 
             $("ul.nav > li.active").removeClass("active");
-
             $("div.top-nav").hide();
+
             tag.addClass("active");
 
             let target_select = tag.find("a").attr("data-target");
@@ -120,27 +117,17 @@ let system = {
 
         let target = (window.location.search.match(/tab=([^&#]+)/) || ["","overview-personal-info"])[1];
         $(`ul.nav > li > a[data-target='#tab-${target}']`).click();
-    },
-
-    initConfig: function () {
-        system.AddNavListener();
-        system.initExtension();
-        system.initRulePage();
-        system.initBackupPage();
-        system.initHelpPage();
-        new Clipboard('.btn-clipboard');
-    },
-
-    initRulePage() {
-
+    },  // 左侧导航渲染方法
+    renderPersonInfo() {},
+    renderReports() {},
+    renderRules() {
         $('#config-extension').sortable({
-            finish: () => {system.ConfigRewriteExtension();}
+            finish: () => system.ConfigRewriteExtension(),
         });
-
-
-    },  // 基本设置页面
-
-    initBackupPage() {  // TODO 检查所有方法
+    },
+    renderBtClient() {},
+    renderSite() {},
+    renderOther() {
         $("input#config-file").change(() => {
             let restoreFile = $("#config-file")[0];
             if (restoreFile.files.length > 0 && restoreFile.files[0].name.length > 0) {
@@ -198,41 +185,10 @@ let system = {
         });  // 导出日志
         $("button#button-log-clean").click(() => {
             system.log = [];
-            system.WriteLog("Cleaned History Log.");
+            system.writeLog("Cleaned History Log.");
         });  // 清空日志
-
-        /* $("#button-config-sync-save").click(function () {
-            let button = $(this);
-            button.prop("disabled", true);
-            system.sendMessage({
-                action: "save-config-to-google",
-                config: system.config
-            }, function () {
-                button.prop("disabled", false);
-                system.showSuccessMsg("参数已备份至Google 帐户");
-            });
-        }); */  // 3 备份参数设置至google帐户
-        /* $("#button-config-sync-get").click(function () {
-            let button = $(this);
-            button.prop("disabled", true);
-            system.sendMessage({
-                action: "read-config-from-google"
-            }, function (result) {
-                if (result) {
-                    system.config = result;
-                    system.initConfig();
-                    system.saveConfig(true);
-                    system.showSuccessMsg("参数已从Google 帐户中恢复");
-                } else {
-                    alert("加载失败或 Google 帐户中无配置信息。");
-                }
-
-                button.prop("disabled", false);
-            });
-        }); */  // 4 从google帐户中恢复设置
-    },  // 备份页面
-
-    initHelpPage() {
+    },
+    renderHelp() {
         chrome.storage.sync.get({log: system.log},items => {
             system.log = items.log;
 
@@ -247,12 +203,18 @@ let system = {
         });
     },
 
-
-    WriteLog(log) {
-        let now = TimeStampFormatter(Date.now());
-        system.log.push(`${now} - ${log}`);
-
-        chrome.storage.sync.set({log:system.log});
+    initOptionPage() {  // 在插件后台配置页面渲染以及DOM监听方法（从左到右，从上到下）
+        system.renderExtension();  // 扩展插件
+        system.renderNav();   // 左侧导航栏，请注意，由于组件是动态加载可配置的，所以在组件变动后，请再次调用这个方法
+        // 其他页面渲染方法（只在进入后渲染，而不是一开始渲染好）
+        $("a[data-target='#tab-overview-personal-info']").click(() => system.renderPersonInfo());  // 个人信息界面
+        $("a[data-target='#tab-overview-reports']").click(system.renderReports());     // 信息报表
+        $("a[data-target='#tab-config-rules']").click(system.renderRules());  //
+        $("a[data-target='#tab-config-bt-clients']").click(system.renderBtClient());
+        $("a[data-target='#tab-config-sites']").click(system.renderSite());
+        $("a[data-target='#tab-config-other']").click(system.renderOther());
+        $("a[data-target='#tab-help']").click(system.renderHelp());
+        new Clipboard('.btn-clipboard');
     },
 
 
@@ -266,27 +228,22 @@ let system = {
         // 1. 获取设置并初始化所有设置
         chrome.storage.sync.get({config: system.config_default},items => {
             system.config = items.config;
-            system.initConfig()
+
+            system.initOptionPage();  // 配置页渲染方法
         });
-
-
-        // 2. 给各种按钮增加监听策略
-        // 2.1 左侧导航条激活效果及各页面切换
-
-
-
-        // 2.2 总览
-
-
-        // 2.4 参数设置
     },
 
     saveConfig(saveOnly) {
         if (!saveOnly) {
-
+            // TODO
         }
-
         chrome.storage.sync.set({config:system.config});
+    },
+
+    writeLog(log) {
+        let now = TimeStampFormatter(Date.now());
+        system.log.push(`${now} - ${log}`);
+        chrome.storage.sync.set({log:system.log});
     },
 
 

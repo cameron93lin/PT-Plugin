@@ -57,20 +57,7 @@ let system = {
         }
     },
 
-    ConfigRewriteExtension() {
-        system.config.extension = $("#config-extension > div").map((i,item) => {
-            let rObj = {};
-            let tag = $(item);
-            rObj["enable"] = tag.find("input[type='checkbox']").prop("checked");
-            rObj["name"] = tag.attr("data-name");
-            rObj["script"] = tag.attr("data-script");
-            return rObj;
-        }).get();
-        system.renderExtension();  // 重新加载插件
-        system.saveConfig(true);   // 重写插件设置并保存
-    },  // 扩展插件（底层）
-
-    renderExtension() {
+    renderExtension(change) {
         function render() {
             // 左侧Nav导航以及插件的DOM元素
             $("ul#nav-extension").html(system.config.extension.reduce((a,b) => {
@@ -84,17 +71,27 @@ let system = {
             $("#config-extension").html(system.config.extension.reduce((a,b) => {
                 return a + `<div class="list-group-item" data-name="${b.name}" data-script="${b.script}"><div class="switch"><input type="checkbox" name="extension-${b.script}" ${b.enable ? "checked" : ""}><label>${b.name}</label></div></div>`
             },""));
-            $("#config-extension input[type='checkbox']").change(() => {system.ConfigRewriteExtension();});
+            $("#config-extension input[type='checkbox']").change(() => {system.renderExtension(true);});
+            system.saveConfig(true);   // 重写插件设置并保存
         }
 
-        if (system.config.extension.length === 0){
+        if (change) {
+            system.config.extension = $("#config-extension > div").map((i,item) => {
+                let rObj = {};
+                let tag = $(item);
+                rObj["enable"] = tag.find("input[type='checkbox']").prop("checked");
+                rObj["name"] = tag.attr("data-name");
+                rObj["script"] = tag.attr("data-script");
+                return rObj;
+            }).get();
+        } else if (system.config.extension.length === 0){
             $.getJSON("extension/init.json",data => {
                 system.config.extension = data.extension;
                 render();
-            });  // 加载默认插件
-        } else {
-            render();
+            });
+            return
         }
+        render();
     },  // 扩展插件动态加载
 
     renderNav() {
@@ -122,7 +119,7 @@ let system = {
     renderReports() {},
     renderRules() {
         $('#config-extension').sortable({
-            finish: () => system.ConfigRewriteExtension(),
+            finish: () => system.renderExtension(true),
         });
     },
     renderBtClient() {},

@@ -48,7 +48,17 @@ table.tv  tr > td:nth-child(2) {
     padding: 20px 0;
 }
 
+/* 为可拖动的条目应用可移动光标类型 */
+.sortableList > .list-group-item {cursor: move}
 
+/* 为正在被拖动的条目应用半透明外观 */
+.sortableList > .list-group-item.dragging {
+    visibility: visible;
+    opacity: .3;
+}
+
+
+/*  复制按钮设置 */
 .zero-clipboard {
     position: relative;
 }

@@ -1,0 +1,34 @@
+{
+  "extension": [
+    {
+      "enable": false,
+      "name": "新种聚合（RSS聚合）",
+      "script": "rssboard"
+    },
+    {
+      "enable": false,
+      "name": "多站聚合搜索",
+      "script": "adv-search"
+    },
+    {
+      "enable": true,
+      "name": "种子简介生成",
+      "script": "infogen"
+    },
+    {
+      "enable": true,
+      "name": "HTML <-> BBCode",
+      "script": "h2b"
+    },
+    {
+      "enable": false,
+      "name": "图片批量转存",
+      "script": "img-trans"
+    },
+    {
+      "enable": false,
+      "name": "快速链接",
+      "script": "quicklink"
+    }
+  ]
+}

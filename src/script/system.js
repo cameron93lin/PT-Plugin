@@ -16,7 +16,7 @@ let system = {
 
     },
     config_default: {    // 脚本第一次运行时导入的配置信息
-
+        extension: []   // 从 extension/init.js 中导入
     },
     config: {},   // 脚本日常使用时使用的配置信息（从chrome中获取）
 
@@ -55,28 +55,48 @@ let system = {
         }
     },
 
-    initConfig: function () {
+    initExtension() {
+        function render() {
+            // 左侧Nav导航以及插件的DOM元素
+            $("ul#nav-extension").html(system.config.extension.reduce((a,b) => {
+                if (b.enable) {
+                    $.getScript(`extension/${b.script}.js`,() => {system.AddNavListener();});
+                    a += `<li><a href="#" data-target="#tab-extension-${b.script}">${b.name}</a></li>`
+                }
+                return a;
+            },""));
 
-    },
+            $("#config-extension").html(system.config.extension.reduce((a,b) => {
+                return a + `<div class="list-group-item" data-name="${b.name}" data-script="${b.script}"><div class="switch"><input type="checkbox" name="extension-${b.script}" ${b.enable ? "checked" : ""}><label>${b.name}</label></div></div>`
+            },""));
+            $("#config-extension input[type='checkbox']").change(() => {system.RewriteExtensionConfig();});
+        }
 
-
-    init: function () {
-        // 1. 获取设置并初始化所有设置
-        chrome.tabs.getCurrent(function (tab) {
-            chrome.extension.sendMessage({
-                action: "set-options-tabid",
-                id: tab.id
+        if (system.config.extension.length === 0){
+            $.getJSON("extension/init.json",data => {
+                system.config.extension = data.extension;
+                render();
             });
-        });
-        chrome.extension.sendMessage({
-            action: "read-config"
-        }, function (config) {
-            system.config = config;
-            system.initConfig()
-        });
+        } else {
+            render();
+        }
+    },  // 扩展插件动态加载
 
-        // 2. 给各种按钮增加监听策略
-        // 2.1 左侧导航条激活效果及各页面切换
+    RewriteExtensionConfig() {
+        system.config.extension = $("#config-extension > div").map((i,item) => {
+            let rObj = {};
+            let tag = $(item);
+            rObj["enable"] = tag.find("input[type='checkbox']").prop("checked");
+            rObj["name"] = tag.attr("data-name");
+            rObj["script"] = tag.attr("data-script");
+            return rObj;
+        }).get();
+        system.initExtension();
+        system.saveConfig(true);
+    },  // 重写扩展插件配置
+
+
+    AddNavListener() {
         $("ul.nav > li").click(function () {
             let tag = $(this);
             let target_select = tag.find("a").attr("data-target");
@@ -94,23 +114,27 @@ let system = {
 
         let target = (window.location.search.match(/tab=([^&#]+)/) || ["","overview-personal-info"])[1];
         $(`ul.nav > li > a[data-target='#tab-${target}']`).click();
+    },
 
-
-        // 2.2 总览
-
-        // 2.3 扩展插件
-
-        // TODO 动态加载
-        $.getScript("extension/infogen.js");
-        $.getScript("extension/h2b.js");
-
+    initConfig: function () {
+        system.AddNavListener();
+        system.initExtension();
+        system.initRulePage();
+        system.initBackupPage();
         new Clipboard('.btn-clipboard');
+    },
+
+    initRulePage() {
+
+        $('#config-extension').sortable({
+            finish: e => {system.RewriteExtensionConfig();}
+        });
 
 
-        // 2.4 参数设置
+    },  // 基本设置页面
 
-        // 2.4.4 备份页面
-        // 2.4.4.1 备份到文件
+
+    initBackupPage() {  // TODO 检查所有方法
         $("button#button-config-backup-file").click(function () {
             let config_str = JSON.stringify(system.config);
             let config_backup_key = $("input#input-backup-key").val();
@@ -119,14 +143,10 @@ let system = {
                 config_str = cipher_text.toString();
             }
             system.saveFileAs("PT-plugin-config.json", config_str);
-        });
-
-        // 2.4.4.2(1) 从文件中恢复
+        });  // 1 备份到文件
         $("#button-config-backup-selectfile").click(function () {
             $("#file-config").click();
-        });
-
-        // 2.4.4.2(2) 从文件中恢复（底层）
+        });  // 2.1 从文件中恢复
         $("#file-config").change(function () {
             let restoreFile = $("#file-config")[0];
             if (restoreFile.files.length > 0 && restoreFile.files[0].name.length > 0) {
@@ -159,9 +179,7 @@ let system = {
                 r.readAsText(restoreFile.files[0]);
                 restoreFile.value = "";
             }
-        });
-
-        // 2.4.4.3 备份参数设置至google帐户
+        });  // 2.2 从文件中恢复（底层）
         $("#button-config-sync-save").click(function () {
             let button = $(this);
             button.prop("disabled", true);
@@ -172,9 +190,7 @@ let system = {
                 button.prop("disabled", false);
                 system.showSuccessMsg("参数已备份至Google 帐户");
             });
-        });
-
-        // 2.4.4.4 从google帐户中恢复设置
+        });  // 3 备份参数设置至google帐户
         $("#button-config-sync-get").click(function () {
             let button = $(this);
             button.prop("disabled", true);
@@ -192,26 +208,59 @@ let system = {
 
                 button.prop("disabled", false);
             });
-        });
-
-        // 2.4.4.5 重置到默认状态
+        });  // 4 从google帐户中恢复设置
         $("#button-config-restore-default").click(function () {
             system.config = system.config_default;
             system.initConfig();
             system.saveConfig(true);
             system.showSuccessMsg("已重置到默认状态");
-        });
-
-        // 2.4.4.6 重置到空白状态
+        });  // 5 重置到默认状态
         $("#button-config-restore-clean").click(function () {
             system.config = system.config_black;
             system.initConfig();
             system.saveConfig(true);
             system.showSuccessMsg("已重置到空白状态");
+        });    // 6 重置到空白状态
+    },  // 备份页面
+
+    init: function () {
+        $.ajaxSetup({
+            cache: true
+        });  // 启用jQuery的AJAX缓存
+
+        // 1. 获取设置并初始化所有设置
+        chrome.tabs.getCurrent(function (tab) {
+            chrome.extension.sendMessage({
+                action: "set-options-tabid",
+                id: tab.id
+            });
         });
+        chrome.extension.sendMessage({
+            action: "read-config"
+        }, function (config) {
+
+            if (typeof config === "undefined") {
+                system.config = system.config_default;
+            } else {
+                system.config = config;
+            }
+            system.initConfig()
+        });
+
+        // 2. 给各种按钮增加监听策略
+        // 2.1 左侧导航条激活效果及各页面切换
+
+
+
+        // 2.2 总览
+
+
+        // 2.4 参数设置
     },
 
+    saveConfig() {
 
+    },
 
 
     showMessage: (msg,options) => {

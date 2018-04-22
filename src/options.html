@@ -29,14 +29,7 @@
             </ul>
             <hr>
             <h3>扩展插件</h3>
-            <ul class="nav nav-secondary nav-stacked">
-                <li><a href="#" data-target="#tab-extension-rssboard">新种聚合（RSS聚合）</a></li>
-                <li><a href="#" data-target="#tab-extension-adv-search">多站聚合搜索</a></li>
-                <li><a href="#" data-target="#tab-extension-infogen">种子简介生成</a></li>
-                <li><a href="#" data-target="#tab-extension-h2b">HTML <-> BBCode</a></li>
-                <li><a href="#" data-target="#tab-extension-img-trans">图片批量转存</a></li>
-                <li><a href="#" data-target="#tab-extension-quicklink">快速链接</a></li>
-            </ul>
+            <ul class="nav nav-secondary nav-stacked" id="nav-extension"></ul> <!-- 由插件根据用户设置自动生成  -->
             <hr>
             <h3>参数设置</h3>
             <ul class="nav nav-secondary nav-stacked">
@@ -100,6 +93,11 @@
             <!-- 参数设置 -->
             <div id="tab-config-rules" class="top-nav">
                 <h1 class="page-header">基本设置</h1>
+                <h2>扩展插件</h2>
+                <p class="hl-green">
+                    你可以在这个页面对扩展插件进行启用或者排序。
+                </p>
+                <div class="list-group sortableList" id="config-extension"></div>
                 <h2>页面规则</h2>
                 <p class="hl-green">
                     在这里用正则匹配式的形式添加站点页面匹配支持，适配的页面会添加Popup辅助按钮。<br>
@@ -210,6 +208,7 @@
 <script src="static/lib/filesaver/FileSaver.js"></script>
 <script src="static/lib/zui/zui.min.js"></script>
 <script src="static/lib/datatable/zui.datatable.min.js"></script>
+<script src="static/lib/sortable/zui.sortable.min.js"></script>
 
 <script src="script/options.js"></script>
 <script src="script/system.js"></script>

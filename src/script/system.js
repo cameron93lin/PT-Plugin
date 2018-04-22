@@ -19,7 +19,60 @@ let system = {
     log: [],  // 脚本日常使用时产生的日志信息
     config: {},   // 脚本日常使用时使用的配置信息（从chrome中获取）
     config_default: {    // 脚本第一次运行时（即获取的配置为空时）或重置时导入的配置信息
-        extension: []   // 从 extension/init.json 中导入
+        extension: [],   // 从 extension/init.json 中导入
+        extension_config: {
+            example_extension_name: {}  // 示例
+        },  // 供插件存放其设置的字典
+        pluginIconShowPages: ["/torrents.php", "/browse.php", "/rescue.php"],  // 图标展示页面
+        contextMenuRules: {
+            "torrentDetailPages": ["*://*/details.php*", "*://*/plugin_details.php*", "https://totheglory.im/t/*"],  // 种子列表页
+            "torrentListPages": ["*://*/torrents.php*", "*://*/browse.php*", "*://*/rescue.php*"],  // 种子详情页
+            "torrentDownloadLinks": ["*://*/download.php*","*://*/*.torrent","magnet:\?xt=urn:btih:"],  // 种子下载链接格式
+        },
+        client: {
+            default_client_id: 0,  // 默认使用BT客户端ID，为client_list序号
+            client_list : [
+                {
+                    type: "transmission",
+                    tag: "Transmission 示例",
+                    server: "http://192.168.1.1",
+                    port: "9091",
+                    username: "",
+                    password: "",
+                    rpc: "",
+                    autostart: false,
+                    webui: ""
+                },
+                {
+                    type: "utorrent",
+                    tag: "utorrent 示例",
+                    server: "",
+                    port: "",
+                    username: "",
+                    password: "",
+                    gui: "",
+                    webui: ""
+                },
+                {
+                    type:  "deluge",
+                    tag: "deluge 示例",
+                    server: "",
+                    port: "",
+                    password: "",
+                    gui: "",
+                    webui: ""
+                },
+            ]
+        },
+        site: [
+            // TODO Site Object
+            {
+                "name": "byr",
+                "rss_link": "",
+                "rss_interval": 5*60*1e3,
+            }
+        ],
+
     },
 
     saveFileAs(fileName, fileData, options) {

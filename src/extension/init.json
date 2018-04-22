@@ -24,11 +24,6 @@
       "enable": false,
       "name": "图片批量转存",
       "script": "img-trans"
-    },
-    {
-      "enable": false,
-      "name": "快速链接",
-      "script": "quicklink"
     }
   ]
 }

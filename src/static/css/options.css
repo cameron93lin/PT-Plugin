@@ -25,6 +25,10 @@ body {
     margin-top: 0;
 }
 
+.top-nav {
+    display: none;
+}
+
 /* Title Bar */
 .title-bar {
     margin-top: 5px;

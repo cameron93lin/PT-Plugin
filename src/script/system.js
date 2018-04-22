@@ -10,17 +10,19 @@ let html_parser = function (raw) {
     }
 };
 
+function TimeStampFormatter(data) {
+    let unixTimestamp = new Date(data);
+    return unixTimestamp.toLocaleString();
+}
 
 let system = {
-    config_black : {   // 完全空白的配置信息
-
-    },
-    config_default: {    // 脚本第一次运行时导入的配置信息
-        extension: []   // 从 extension/init.js 中导入
-    },
+    log: [],  // 脚本日常使用时产生的日志信息
     config: {},   // 脚本日常使用时使用的配置信息（从chrome中获取）
+    config_default: {    // 脚本第一次运行时（即获取的配置为空时）或重置时导入的配置信息
+        extension: []   // 从 extension/init.json 中导入
+    },
 
-    saveFileAs: function (fileName, fileData) {
+    saveFileAs(fileName, fileData, options) {
         try {
             let Blob = window.Blob || window.WebKitBlob;
 
@@ -38,7 +40,7 @@ let system = {
 
             let b = null;
             if (constructor_supported) {
-                b = new Blob([fileData], {
+                b = new Blob([fileData], options || {
                     "type": "text/plain"
                 });
             } else {
@@ -69,7 +71,7 @@ let system = {
             $("#config-extension").html(system.config.extension.reduce((a,b) => {
                 return a + `<div class="list-group-item" data-name="${b.name}" data-script="${b.script}"><div class="switch"><input type="checkbox" name="extension-${b.script}" ${b.enable ? "checked" : ""}><label>${b.name}</label></div></div>`
             },""));
-            $("#config-extension input[type='checkbox']").change(() => {system.RewriteExtensionConfig();});
+            $("#config-extension input[type='checkbox']").change(() => {system.ConfigRewriteExtension();});
         }
 
         if (system.config.extension.length === 0){
@@ -82,7 +84,7 @@ let system = {
         }
     },  // 扩展插件动态加载
 
-    RewriteExtensionConfig() {
+    ConfigRewriteExtension() {
         system.config.extension = $("#config-extension > div").map((i,item) => {
             let rObj = {};
             let tag = $(item);
@@ -97,19 +99,23 @@ let system = {
 
 
     AddNavListener() {
+
         $("ul.nav > li").click(function () {
+
             let tag = $(this);
-            let target_select = tag.find("a").attr("data-target");
 
             $("ul.nav > li.active").removeClass("active");
-            $("div[id^='tab']").hide();
 
+            $("div.top-nav").hide();
             tag.addClass("active");
 
+            let target_select = tag.find("a").attr("data-target");
             $(target_select).show();
-
-            if (!window.location.search) window.location.search += "?tab=overview-personal-info";
             history.pushState({}, null, window.location.href.replace(/tab=[^&]+/,`tab=${target_select.slice(5)}`));
+        });
+
+        $("ul.nav > li > a[data-target='#tab-help']").click(() => {
+            $("#system-log").text(system.log.join("\n"));
         });
 
         let target = (window.location.search.match(/tab=([^&#]+)/) || ["","overview-personal-info"])[1];
@@ -121,34 +127,22 @@ let system = {
         system.initExtension();
         system.initRulePage();
         system.initBackupPage();
+        system.initHelpPage();
         new Clipboard('.btn-clipboard');
     },
 
     initRulePage() {
 
         $('#config-extension').sortable({
-            finish: e => {system.RewriteExtensionConfig();}
+            finish: () => {system.ConfigRewriteExtension();}
         });
 
 
     },  // 基本设置页面
 
-
     initBackupPage() {  // TODO 检查所有方法
-        $("button#button-config-backup-file").click(function () {
-            let config_str = JSON.stringify(system.config);
-            let config_backup_key = $("input#input-backup-key").val();
-            if (config_backup_key) {
-                let cipher_text = CryptoJS.AES.encrypt(config_str, config_backup_key);
-                config_str = cipher_text.toString();
-            }
-            system.saveFileAs("PT-plugin-config.json", config_str);
-        });  // 1 备份到文件
-        $("#button-config-backup-selectfile").click(function () {
-            $("#file-config").click();
-        });  // 2.1 从文件中恢复
-        $("#file-config").change(function () {
-            let restoreFile = $("#file-config")[0];
+        $("input#config-file").change(() => {
+            let restoreFile = $("#config-file")[0];
             if (restoreFile.files.length > 0 && restoreFile.files[0].name.length > 0) {
                 let r = new FileReader();
                 r.onload = function (e) {
@@ -179,8 +173,35 @@ let system = {
                 r.readAsText(restoreFile.files[0]);
                 restoreFile.value = "";
             }
-        });  // 2.2 从文件中恢复（底层）
-        $("#button-config-sync-save").click(function () {
+        });  // 从文件中恢复（底层）
+
+        $("button#button-config-export").click(() => {
+            let config_str = JSON.stringify(system.config);
+            let config_backup_key = $("input#input-backup-key").val();
+            if (config_backup_key) {
+                let cipher_text = CryptoJS.AES.encrypt(config_str, config_backup_key);
+                config_str = cipher_text.toString();
+            }
+            system.saveFileAs("PT-plugin-config.json", config_str);
+        });  // 备份到文件
+        $("button#button-config-import").click(() => {
+            $("#file-config").click();
+        });  // 从文件中恢复
+        $("button#button-config-restore").click(() => {
+            system.config = system.config_default;
+            system.initConfig();
+            system.saveConfig(true);
+            system.showSuccessMsg("已重置到默认状态");
+        });  // 重置到默认状态
+        $("button#button-log-export").click(() => {
+            system.saveFileAs("PT-plugin-log.log", system.log.join("\n"),{"type": "text/plain","endings": "native"});
+        });  // 导出日志
+        $("button#button-log-clean").click(() => {
+            system.log = [];
+            system.WriteLog("Cleaned History Log.");
+        });  // 清空日志
+
+        /* $("#button-config-sync-save").click(function () {
             let button = $(this);
             button.prop("disabled", true);
             system.sendMessage({
@@ -190,8 +211,8 @@ let system = {
                 button.prop("disabled", false);
                 system.showSuccessMsg("参数已备份至Google 帐户");
             });
-        });  // 3 备份参数设置至google帐户
-        $("#button-config-sync-get").click(function () {
+        }); */  // 3 备份参数设置至google帐户
+        /* $("#button-config-sync-get").click(function () {
             let button = $(this);
             button.prop("disabled", true);
             system.sendMessage({
@@ -208,44 +229,46 @@ let system = {
 
                 button.prop("disabled", false);
             });
-        });  // 4 从google帐户中恢复设置
-        $("#button-config-restore-default").click(function () {
-            system.config = system.config_default;
-            system.initConfig();
-            system.saveConfig(true);
-            system.showSuccessMsg("已重置到默认状态");
-        });  // 5 重置到默认状态
-        $("#button-config-restore-clean").click(function () {
-            system.config = system.config_black;
-            system.initConfig();
-            system.saveConfig(true);
-            system.showSuccessMsg("已重置到空白状态");
-        });    // 6 重置到空白状态
+        }); */  // 4 从google帐户中恢复设置
     },  // 备份页面
+
+    initHelpPage() {
+        chrome.storage.sync.get({log: system.log},items => {
+            system.log = items.log;
+
+            // Limit Log Array Length
+            let show_log = system.log;
+            let log_limit = 20;
+            if (show_log.length > log_limit) {  // 只显示最新的多少条日志，
+                show_log = show_log.slice(show_log.length - log_limit,show_log.length).reverse();
+            }
+
+            $("#system-log").text(show_log.join("\n"));
+        });
+    },
+
+
+    WriteLog(log) {
+        let now = TimeStampFormatter(Date.now());
+        system.log.push(`${now} - ${log}`);
+
+        chrome.storage.sync.set({log:system.log});
+    },
+
 
     init: function () {
         $.ajaxSetup({
             cache: true
         });  // 启用jQuery的AJAX缓存
 
-        // 1. 获取设置并初始化所有设置
-        chrome.tabs.getCurrent(function (tab) {
-            chrome.extension.sendMessage({
-                action: "set-options-tabid",
-                id: tab.id
-            });
-        });
-        chrome.extension.sendMessage({
-            action: "read-config"
-        }, function (config) {
+        if (!window.location.search) window.location.search += "?tab=overview-personal-info";
 
-            if (typeof config === "undefined") {
-                system.config = system.config_default;
-            } else {
-                system.config = config;
-            }
+        // 1. 获取设置并初始化所有设置
+        chrome.storage.sync.get({config: system.config_default},items => {
+            system.config = items.config;
             system.initConfig()
         });
+
 
         // 2. 给各种按钮增加监听策略
         // 2.1 左侧导航条激活效果及各页面切换
@@ -258,8 +281,12 @@ let system = {
         // 2.4 参数设置
     },
 
-    saveConfig() {
+    saveConfig(saveOnly) {
+        if (!saveOnly) {
 
+        }
+
+        chrome.storage.sync.set({config:system.config});
     },
 
 

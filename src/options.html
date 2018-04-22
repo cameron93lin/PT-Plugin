@@ -36,7 +36,7 @@
                 <li><a href="#" data-target="#tab-config-rules">基本设置</a></li>
                 <li><a href="#" data-target="#tab-config-bt-clients">远程下载</a></li>
                 <li><a href="#" data-target="#tab-config-sites">站点设定</a></li>
-                <li><a href="#" data-target="#tab-config-backup">备份/恢复</a></li>
+                <li><a href="#" data-target="#tab-config-other">其他设定</a></li>
                 <li><a href="#" data-target="#tab-help">帮助/说明</a></li>
             </ul>
         </div>
@@ -134,17 +134,17 @@
             <div id="tab-config-sites" class="top-nav">
                 <h1 class="page-header">站点设定</h1>
             </div>
-            <div id="tab-config-backup" class="top-nav">
-                <h1 class="page-header">备份/恢复</h1>
-                <p class="hl-green">导出属于你个人的脚本设置，以方便通过文件（可加密）或Google云的形式实现多机同步。</p>
+            <div id="tab-config-other" class="top-nav">
+                <h1 class="page-header">其他设定</h1>
                 <table class="table tv">
                     <tbody>
                     <tr>
-                        <td><h4>文件</h4></td>
+                        <td><h4>备份/恢复</h4></td>
                         <td>
                             <p class="hl-yellow">
+                                导出属于你个人的脚本设置，以方便通过文件（可加密）的形式实现多机同步。<br>
                                 如果不输入加密密钥，则备份文件为明文，其中可能泄漏个人信息；如果输入加密密钥，则使用AES算法对文本进行对称加密。<br>
-                                请注意：加密密钥并不会以任何形式存储在插件配置中，请妥善保存。
+                                请注意：<strong>加密密钥并不会以任何形式存储在插件配置中，请妥善保存。</strong>
                             </p>
                             <div class="row">
                                 <div class="col-md-6">
@@ -155,28 +155,29 @@
                                 </div>
                             </div>
                             <p></p>
-                            <button id="button-config-backup-file" class="btn">备份设置</button>
-                            <button id="button-config-backup-selectfile" class="btn">恢复设置</button>
-                            <input type="file" id="file-config" name="file-config" style="display:none;"/>
+                            <button id="button-config-export" class="btn">备份设置</button>
+                            <button id="button-config-import" class="btn">恢复设置</button>
+                            <input type="file" id="config-file" name="file-config" style="display:none;"/>
+
                         </td>
                     </tr>
                     <tr>
-                        <td><h4>Google 云</h4></td>
-                        <td><button id="button-config-sync-save" class="btn">将当前设置同步至google帐户</button>
-                            <button id="button-config-sync-get" class="btn">从google帐户恢复设置</button></td>
-                    </tr>
-                    </tbody>
-                </table>
-
-                <h1 class="page-header">重置</h1>
-                <p class="hl-red">重置脚本所有设定到初始状态，如非必要请勿点击。</p>
-                <table class="table tv">
-                    <tbody>
-                    <tr>
                         <td><h4>重置设定</h4></td>
                         <td>
-                            <button id="button-config-restore-default" class="btn">重置到默认状态</button>
-                            <button id="button-config-restore-clean" class="btn">重置到空白状态</button>
+                            <p class="hl-red">重置脚本所有设定到初始状态，如非必要请勿点击。</p>
+                            <button id="button-config-restore" class="btn">重置到默认状态</button>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><h4>日志</h4></td>
+                        <td>
+                            <p class="hl-yellow">
+                                插件在运行过程中会产生大量日志，以供进一步分析，你可以随时来导出或清空这里的日志信息。<br>
+                                除非你主动向开发组汇报，本处日志不会在后台以任何形式上传。
+                            </p>
+                            <button id="button-log-export" class="btn">导出日志</button>
+                            <button id="button-log-clean" class="btn">清空日志</button>
                         </td>
                     </tr>
                     </tbody>
@@ -193,8 +194,18 @@
                     <li><strong>brix/crypto-js</strong>: <a href="https://github.com/brix/crypto-js" target="_blank">https://github.com/brix/crypto-js</a>, JavaScript library of crypto standards.</li>
                     <li><strong>tengattack/html2bbcode.js</strong>: <a href="https://github.com/tengattack/html2bbcode.js" target="_blank">https://github.com/tengattack/html2bbcode.js</a>, Convert HTML to BBCode</li>
                     <li><strong>cburschka/xbbcode.js</strong>: <a href="https://github.com/cburschka/xbbcode.js" target="_blank">https://github.com/cburschka/xbbcode.js</a>, JavaScript version of XBBCode</li>
+                    <li><strong>bobby-brennan/rss-parser</strong>: <a href="https://github.com/bobby-brennan/rss-parser" target="_blank">https://github.com/bobby-brennan/rss-parser</a>, A lightweight RSS parser, for Node and the browser</li>
                 </ul>
                 <h2>捐助</h2>
+
+
+                <h2>系统日志</h2>
+                <div class="row">
+                    <div class="col-md-10 col-md-pull-1 col-md-push-1">
+                        <label for="system-log"></label><textarea class="form-control" id="system-log" rows=12 disabled readonly></textarea>
+                    </div>
+                </div>
+
 
             </div>
         </div>

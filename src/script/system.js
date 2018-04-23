@@ -15,22 +15,6 @@ function TimeStampFormatter(data) {
     return unixTimestamp.toLocaleString();
 }
 
-function loadScript(url, callback) {
-    // Adding the script tag to the head as suggested before
-    if (document.querySelectorAll(`script[src='${url}']`).length === 0) {
-        let head = document.getElementsByTagName('head')[0];
-        let script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = url;
-
-        // Then bind the event to the callback function.
-        // There are several events for cross browser compatibility.
-        script.onreadystatechange = callback;
-        script.onload = callback;
-
-        head.appendChild(script); // Fire the loading
-    }
-}
 
 let system = {
     log: [],  // 脚本日常使用时产生的日志信息
@@ -146,7 +130,7 @@ let system = {
             $("a[data-target^='#tab-extension-']").click(function () {
                 let target = $(this);
                 let target_js = target.attr("data-target").slice(15);
-                loadScript(`extension/${target_js}.js`,function () {
+                system.loadScript(`extension/${target_js}.js`,function () {
                     system.targetDefaultClick();
                 });
             });
@@ -198,13 +182,18 @@ let system = {
     renderPersonInfo() {},
     renderReports() {},
     renderRules() {
-        $('#config-extension').sortable({
-            finish: () => system.renderExtension(true),
+        system.loadScript("static/lib/sortable/zui.sortable.min.js",function () {
+            $('#config-extension').sortable({
+                finish: () => system.renderExtension(true),
+            });
         });
     },
     renderBtClient() {},
     renderSite() {},
     renderOther() {
+        system.loadScript("static/lib/crypto/crypto-js.min.js");
+        system.loadScript("static/lib/filesaver/FileSaver.js");
+
         $("input#file-config").change(() => {
             let restoreFile = $("#file-config")[0];
             if (restoreFile.files.length > 0 && restoreFile.files[0].name.length > 0) {
@@ -285,15 +274,14 @@ let system = {
         system.renderNav();   // 左侧导航栏，请注意，由于组件是动态加载可配置的，所以在组件变动后，请再次调用这个方法
         // 其他页面渲染方法（只在进入后渲染，而不是一开始渲染好）
         $("a[data-target='#tab-overview-personal-info']").click(() => system.renderPersonInfo());  // 个人信息界面
-        $("a[data-target='#tab-overview-reports']").click(system.renderReports());     // 信息报表
-        $("a[data-target='#tab-config-rules']").click(system.renderRules());  //
-        $("a[data-target='#tab-config-bt-clients']").click(system.renderBtClient());
-        $("a[data-target='#tab-config-sites']").click(system.renderSite());
-        $("a[data-target='#tab-config-other']").click(system.renderOther());
-        $("a[data-target='#tab-help']").click(system.renderHelp());
+        $("a[data-target='#tab-overview-reports']").click(() => system.renderReports());     // 信息报表
+        $("a[data-target='#tab-config-rules']").click(() => system.renderRules());  //  基本设置
+        $("a[data-target='#tab-config-bt-clients']").click(() => system.renderBtClient());  // 远程下载
+        $("a[data-target='#tab-config-sites']").click(() => system.renderSite());  // 站点设定
+        $("a[data-target='#tab-config-other']").click(() => system.renderOther());  // 其他设定
+        $("a[data-target='#tab-help']").click(() => system.renderHelp());  // 帮助/说明
         new Clipboard('.btn-clipboard');
     },
-
 
     init: function () {
         $.ajaxSetup({
@@ -305,7 +293,6 @@ let system = {
         // 1. 获取设置并初始化所有设置
         chrome.storage.sync.get({config: system.config_default},items => {
             system.config = items.config;
-
             system.initOptionPage();  // 配置页渲染方法
         });
     },
@@ -337,5 +324,39 @@ let system = {
     },
     showErrorMessage: msg => {
         system.showMessage(msg,{type: 'warning'});
+    },
+
+    dynamicalLoad(url,filetype,callback) {
+        let file_ref;
+        if (filetype==="js"){ //if filename is a external JavaScript file
+            if (document.querySelectorAll(`script[src='${url}']`).length === 0) {
+                file_ref = document.createElement('script');
+                file_ref.type = 'text/javascript';
+                file_ref.src = url;
+
+                // Then bind the event to the callback function, There are several events for cross browser compatibility.
+                file_ref.onreadystatechange = callback;
+                file_ref.onload = callback;
+            }
+        }
+        else if (filetype==="css"){ //if filename is an external CSS file
+            if (document.querySelectorAll(`link[href='${url}']`).length === 0) {
+                file_ref = document.createElement("link");
+                file_ref.setAttribute("rel", "stylesheet");
+                file_ref.setAttribute("type", "text/css");
+                file_ref.setAttribute("href", url)
+            }
+        }
+        if (typeof file_ref!=="undefined") {
+            document.getElementsByTagName("head")[0].appendChild(file_ref)
+        }
+    },
+
+    loadScript(url, callback) {
+        system.dynamicalLoad(url,"js",callback);
+    },
+
+    loadCSS(url) {
+        system.dynamicalLoad(url,"css");
     },
 };

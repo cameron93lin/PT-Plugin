@@ -58,7 +58,7 @@
             $("#extension").append($(H2B.html).hide());  // 注册DOM组件
 
             // 加载KindEditor库并实例化HTML富文本编辑器
-            loadScript("static/lib/kindeditor/kindeditor.min.js",function () {
+            system.loadScript("static/lib/kindeditor/kindeditor.min.js",function () {
                 H2B.editor = KindEditor.create('textarea.kindeditor', {
                     width : '100%',
                     basePath: '/static/lib/kindeditor/',
@@ -74,8 +74,8 @@
                 });
             });
 
-            loadScript("static/lib/htmlconverter/html2bbcode.js");
-            loadScript("static/lib/htmlconverter/bbcode2html.js");
+            system.loadScript("static/lib/htmlconverter/html2bbcode.js");
+            system.loadScript("static/lib/htmlconverter/bbcode2html.js");
 
             // 添加DOM监听
             $("#extension-button-h2b").click(() => {H2B.html2ubb();});

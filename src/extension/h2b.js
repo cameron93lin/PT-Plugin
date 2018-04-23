@@ -42,25 +42,23 @@
         editor: {},  // 注册 KindEditor 实例
 
         html2ubb() {
-            $.getScript("static/lib/htmlconverter/html2bbcode.js", () => {
-                let converter = new html2bbcode.HTML2BBCode();
-                let bbcode = converter.feed(H2B.editor.html());
-                $("#h2b-bbcode").text(bbcode.toString());
-            });
+            let converter = new html2bbcode.HTML2BBCode();
+            let bbcode = converter.feed(H2B.editor.html());
+            $("#h2b-bbcode").text(bbcode.toString());
         },
 
         ubb2html(){
-            $.getScript("static/lib/htmlconverter/bbcode2html.js", () => {
-                let converter = new XBBCODE().process({
-                    text: $("#h2b-bbcode").val()
-                });
-                H2B.editor.html(converter.html.replace(/\n/ig,"<br>"));
+            let converter = new XBBCODE().process({
+                text: $("#h2b-bbcode").val()
             });
+            H2B.editor.html(converter.html.replace(/\n/ig,"<br>"));
         },
 
         init() {
             $("#extension").append($(H2B.html).hide());  // 注册DOM组件
-            $.getScript("static/lib/kindeditor/kindeditor.min.js").done(() => {
+
+            // 加载KindEditor库并实例化HTML富文本编辑器
+            loadScript("static/lib/kindeditor/kindeditor.min.js",function () {
                 H2B.editor = KindEditor.create('textarea.kindeditor', {
                     width : '100%',
                     basePath: '/static/lib/kindeditor/',
@@ -74,7 +72,10 @@
                         'insertunorderedlist', '|', 'image', 'link'
                     ]
                 });
-            });   // 加载KindEditor库并实例化HTML富文本编辑器
+            });
+
+            loadScript("static/lib/htmlconverter/html2bbcode.js");
+            loadScript("static/lib/htmlconverter/bbcode2html.js");
 
             // 添加DOM监听
             $("#extension-button-h2b").click(() => {H2B.html2ubb();});

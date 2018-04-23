@@ -1,4 +1,4 @@
-let html_parser = function (raw) {
+function html_parser(raw) {
     let doc = (new DOMParser()).parseFromString(raw, 'text/html');  // 页面解析
     let body = doc.querySelector("body");
     let page = $(body); // 构造 jQuery 对象
@@ -13,6 +13,23 @@ let html_parser = function (raw) {
 function TimeStampFormatter(data) {
     let unixTimestamp = new Date(data);
     return unixTimestamp.toLocaleString();
+}
+
+function loadScript(url, callback) {
+    // Adding the script tag to the head as suggested before
+    if (document.querySelectorAll(`script[src='${url}']`).length === 0) {
+        let head = document.getElementsByTagName('head')[0];
+        let script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = url;
+
+        // Then bind the event to the callback function.
+        // There are several events for cross browser compatibility.
+        script.onreadystatechange = callback;
+        script.onload = callback;
+
+        head.appendChild(script); // Fire the loading
+    }
 }
 
 let system = {
@@ -64,7 +81,7 @@ let system = {
                 },
             ]
         },
-        site: [
+        sites: [
             // TODO Site Object
             {
                 "name": "byr",
@@ -110,22 +127,36 @@ let system = {
         }
     },
 
+    targetDefaultClick(default_target) {
+        default_target = default_target || "overview-personal-info";
+        let target = (window.location.search.match(/tab=([^&#]+)/) || ["",default_target])[1];
+        $(`ul.nav > li > a[data-target='#tab-${target}']`).click();
+    },
+
     renderExtension(change) {
         function render() {
             // 左侧Nav导航以及插件的DOM元素
             $("ul#nav-extension").html(system.config.extension.reduce((a,b) => {
                 if (b.enable) {
-                    $.getScript(`extension/${b.script}.js`,() => {system.renderNav();});
                     a += `<li><a href="#" data-target="#tab-extension-${b.script}">${b.name}</a></li>`
                 }
                 return a;
             },""));
 
+            $("a[data-target^='#tab-extension-']").click(function () {
+                let target = $(this);
+                let target_js = target.attr("data-target").slice(15);
+                loadScript(`extension/${target_js}.js`,function () {
+                    system.targetDefaultClick();
+                });
+            });
+
             $("#config-extension").html(system.config.extension.reduce((a,b) => {
                 return a + `<div class="list-group-item" data-name="${b.name}" data-script="${b.script}"><div class="switch"><input type="checkbox" name="extension-${b.script}" ${b.enable ? "checked" : ""}><label>${b.name}</label></div></div>`
             },""));
+
             $("#config-extension input[type='checkbox']").change(() => {system.renderExtension(true);});
-            system.saveConfig(true);   // 重写插件设置并保存
+            system.renderNav();
         }
 
         if (change) {
@@ -137,9 +168,11 @@ let system = {
                 rObj["script"] = tag.attr("data-script");
                 return rObj;
             }).get();
+            system.saveConfig(true);   // 重写插件设置并保存
         } else if (system.config.extension.length === 0){
             $.getJSON("extension/init.json",data => {
                 system.config.extension = data.extension;
+                system.saveConfig(true);
                 render();
             });
             return
@@ -160,12 +193,7 @@ let system = {
             history.pushState({}, null, window.location.href.replace(/tab=[^&]+/,`tab=${target_select.slice(5)}`));
         });
 
-        $("ul.nav > li > a[data-target='#tab-help']").click(() => {
-            $("#system-log").text(system.log.join("\n"));
-        });
-
-        let target = (window.location.search.match(/tab=([^&#]+)/) || ["","overview-personal-info"])[1];
-        $(`ul.nav > li > a[data-target='#tab-${target}']`).click();
+        system.targetDefaultClick();
     },  // 左侧导航渲染方法
     renderPersonInfo() {},
     renderReports() {},

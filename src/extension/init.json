@@ -1,7 +1,7 @@
 {
   "extension": [
     {
-      "enable": false,
+      "enable": true,
       "name": "新种聚合（RSS聚合）",
       "script": "rssboard"
     },

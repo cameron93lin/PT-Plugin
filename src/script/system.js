@@ -10,6 +10,14 @@ function html_parser(raw) {
     }
 };
 
+function isEmpty(obj) {
+    for(let key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
 function TimeStampFormatter(data) {
     let unixTimestamp = new Date(data);
     return unixTimestamp.toLocaleString();
@@ -68,10 +76,15 @@ let system = {
         sites: [
             // TODO Site Object
             {
-                "name": "byr",
-                "rss_link": "",
-                "rss_interval": 5*60*1e3,
-            }
+                "name": "",
+                "rss_feed": [
+                    {
+                        "link": "",
+                        "enable": true,
+                        "label": ""
+                    },
+                ],
+            },
         ],
 
     },

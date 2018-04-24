@@ -455,15 +455,18 @@
                         return $(item).text().trim();
                     }).get().slice(0,9);  // 标签
                     review = parser.page.find("div.user_reviews_summary_row").map((i,item) => {
-                       let tag = $(item);
-                       let review_type = tag.find("div.subtitle").text().trim().replace(/[:：]/,"");
-                       let review_descr1 = tag.find("span.game_review_summary").text().trim();
-                       let review_descr2 = tag.attr("data-tooltip-text").trim();
-                       return `${review_type}： ${review_descr1} （${review_descr2}） `
-
+                        let tag = $(item);
+                        let review_type = tag.find("div.subtitle").text().trim().replace(/[:：]/,"");
+                        let review_descr1 = tag.find("span.game_review_summary").text().trim();
+                        let review_descr2 = tag.attr("data-tooltip-text").trim();
+                        return `${review_type}： ${review_descr1} （${review_descr2}） `
                     }).get();
 
-                    introduce = descr_anchor.text().replace("关于这款游戏","").trim();
+                    system.loadScript("static/lib/htmlconverter/html2bbcode.js",function () {
+                        let converter = new html2bbcode.HTML2BBCode();
+                        let bbcode = converter.feed(descr_anchor.html().replace("关于这款游戏",""));
+                        introduce = bbcode.toString();
+                    });
 
                     let os_dict = {"win": "Windows", "mac": "Mac OS X", "linux": "SteamOS + Linux"};
                     sysreq = parser.page.find("div.sysreq_contents > div.game_area_sys_req").map((i,item) => {
@@ -518,8 +521,6 @@
                         steam_parser(data);
                     }
                 })
-
-
             }  // TODO Steam链接
             else {
                 system.showErrorMessage("似乎并不认识这种链接(ノ｀Д)ノ");

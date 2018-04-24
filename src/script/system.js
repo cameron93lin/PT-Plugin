@@ -32,11 +32,11 @@ let system = {
         extension_config: {
             example_extension_name: {}  // 示例
         },  // 供插件存放其设置的字典
-        pluginIconShowPages: ["/torrents.php", "/browse.php", "/rescue.php"],  // 图标展示页面
+        pluginIconShowPages: ["*://*/torrents.php", "*://*/browse.php", "*://*/rescue.php"],  // 图标展示页面
         contextMenuRules: {
-            "torrentDetailPages": ["*://*/details.php*", "*://*/plugin_details.php*", "https://totheglory.im/t/*"],  // 种子列表页
+            "torrentDetailPages": ["*://*/details.php*", "*://*/plugin_details.php*", "https?://totheglory.im/t/*"],  // 种子列表页
             "torrentListPages": ["*://*/torrents.php*", "*://*/browse.php*", "*://*/rescue.php*"],  // 种子详情页
-            "torrentDownloadLinks": ["*://*/download.php*","*://*/*.torrent","magnet:\?xt=urn:btih:"],  // 种子下载链接格式
+            "torrentDownloadLinks": ["*://*/download.php*","*://*/*.torrent","magnet:\\?xt=urn:btih:*"],  // 种子下载链接格式
         },
         client: {
             default_client_id: 0,  // 默认使用BT客户端ID，为client_list序号
@@ -165,7 +165,7 @@ let system = {
                 rObj["script"] = tag.attr("data-script");
                 return rObj;
             }).get();
-            system.saveConfig(true);   // 重写插件设置并保存
+            system.saveConfig();   // 重写插件设置并保存
         } else if (system.config.extension.length === 0){
             $.getJSON("extension/init.json",data => {
                 system.config.extension = data.extension;
@@ -200,6 +200,25 @@ let system = {
                 finish: () => system.renderExtension(true),
             });
         });
+
+        $("#pluginIconShowPages").text(system.config.pluginIconShowPages.join("\n"));
+        $("#torrentListPages").text(system.config.contextMenuRules.torrentDetailPages.join("\n"));
+        $("#torrentDetailPages").text(system.config.contextMenuRules.torrentListPages.join("\n"));
+        $("#torrentLinks").text(system.config.contextMenuRules.torrentDownloadLinks.join("\n"));
+
+        $("#page-rule-save").click(() => {
+            system.config.pluginIconShowPages = $("#pluginIconShowPages").val().split("\n");
+            system.config.contextMenuRules.torrentDetailPages = $("#torrentListPages").val().split("\n");
+            system.config.contextMenuRules.torrentListPages = $("#torrentDetailPages").val().split("\n");
+            system.config.contextMenuRules.torrentDownloadLinks = $("#torrentLinks").val().split("\n");
+            system.saveConfig();
+        });
+
+        $("#page-rule-restore").click(()=> {
+            system.config.pluginIconShowPages = system.config_default.pluginIconShowPages;
+            system.config.contextMenuRules = system.config_default.contextMenuRules;
+            system.saveConfig(true);
+        });
     },
     renderBtClient() {},
     renderSite() {},
@@ -226,14 +245,11 @@ let system = {
                             alert("失败，可能该文件未被加密或加密密钥不匹配。")
                         }
 
-                        system.initConfig();
                         system.saveConfig(true);
-                        // system.showSuccessMsg("参数已恢复");
                     }
-
                 };
                 r.onerror = function () {
-                    system.showErrorMsg("配置信息加载失败");
+                    system.showErrorMessage("配置信息加载失败");
                     console.log("配置信息加载失败");
                 };
                 r.readAsText(restoreFile.files[0]);
@@ -248,7 +264,7 @@ let system = {
                 let cipher_text = CryptoJS.AES.encrypt(config_str, config_backup_key);
                 config_str = cipher_text.toString();
             }
-            system.saveFileAs("PT-plugin-config.json", config_str);
+            system.saveFileAs("PT-plugin.conf", config_str);
         });  // 备份到文件
         $("button#button-config-import").click(() => {
             $("#file-config").click();
@@ -256,8 +272,6 @@ let system = {
         $("button#button-config-restore").click(() => {
             system.config = system.config_default;
             system.saveConfig(true);
-            system.showSuccessMsg("已重置到默认状态");
-            system.initOptionPage();
         });  // 重置到默认状态
         $("button#button-log-export").click(() => {
             system.saveFileAs("PT-plugin-log.log", system.log.join("\n"),{"type": "text/plain","endings": "native"});
@@ -286,13 +300,13 @@ let system = {
         system.renderExtension();  // 扩展插件
         system.renderNav();   // 左侧导航栏，请注意，由于组件是动态加载可配置的，所以在组件变动后，请再次调用这个方法
         // 其他页面渲染方法（只在进入后渲染，而不是一开始渲染好）
-        $("a[data-target='#tab-overview-personal-info']").click(() => system.renderPersonInfo());  // 个人信息界面
-        $("a[data-target='#tab-overview-reports']").click(() => system.renderReports());     // 信息报表
-        $("a[data-target='#tab-config-rules']").click(() => system.renderRules());  //  基本设置
-        $("a[data-target='#tab-config-bt-clients']").click(() => system.renderBtClient());  // 远程下载
-        $("a[data-target='#tab-config-sites']").click(() => system.renderSite());  // 站点设定
-        $("a[data-target='#tab-config-other']").click(() => system.renderOther());  // 其他设定
-        $("a[data-target='#tab-help']").click(() => system.renderHelp());  // 帮助/说明
+        system.renderPersonInfo();  // 个人信息界面
+        system.renderReports();     // 信息报表
+        system.renderRules();  //  基本设置
+        system.renderBtClient();  // 远程下载
+        system.renderSite();  // 站点设定
+        system.renderOther();  // 其他设定
+        system.renderHelp();  // 帮助/说明
         new Clipboard('.btn-clipboard');
     },
 
@@ -310,11 +324,15 @@ let system = {
         });
     },
 
-    saveConfig(saveOnly) {
-        if (!saveOnly) {
-            // TODO
-        }
+    saveConfig(reload) {
         chrome.storage.sync.set({config:system.config});
+        if (reload) {
+            system.showSuccessMsg("参数已保存，页面会自动刷新以载入新配置。");
+            setTimeout(() => {location.reload();},3000);
+        } else {
+            system.showSuccessMsg("相关参数已保存。");
+        }
+        // system.writeLog("System Config Changed.")
     },
 
     writeLog(log) {
@@ -361,7 +379,7 @@ let system = {
             }
         }
         if (typeof file_ref!=="undefined") {
-            document.getElementsByTagName("head")[0].appendChild(file_ref)
+            document.getElementsByTagName("head")[0].appendChild(file_ref);
         }
     },
 

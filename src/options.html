@@ -77,19 +77,6 @@
             </div>
             <!-- 扩展插件 -->
             <div id="extension"></div>
-            <div id="tab-extension-rssboard" class="top-nav">
-                <h1 class="page-header">新种聚合（RSS聚合）</h1>
-            </div>
-            <div id="tab-extension-adv-search" class="top-nav">
-                <h1 class="page-header">多站聚合搜索</h1>
-            </div>
-
-            <div id="tab-extension-quicklink" class="top-nav">
-                <h1 class="page-header">快速链接</h1>
-            </div>
-            <div id="tab-extension-img-trans" class="top-nav">
-                <h1 class="page-header">图片批量转存</h1>
-            </div>
             <!-- 参数设置 -->
             <div id="tab-config-rules" class="top-nav">
                 <h1 class="page-header">基本设置</h1>
@@ -100,18 +87,24 @@
                 <div class="list-group sortableList" id="config-extension"></div>
                 <h2>页面规则</h2>
                 <p class="hl-green">
-                    在这里用正则匹配式的形式添加站点页面匹配支持，适配的页面会添加Popup辅助按钮。<br>
+                    在这里用正则匹配式的形式添加站点页面匹配支持，多个页面请用回车分隔。<br>
                     默认情况下已经能满足使用，如果你<strong>不懂正则表达式，切勿随意修改！</strong>
                 </p>
                 <table class="table tv">
                     <tr>
-                        <td>种子列表页面规则：</td>
+                        <td>插件图标显示<br>页面：</td>
+                        <td>
+                            <textarea class="form-control" rows="6" id="pluginIconShowPages" savedtoclear="1" title="torrentListPages"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>种子列表页面<br>规则：</td>
                         <td>
                             <textarea class="form-control" rows="6" id="torrentListPages" savedtoclear="1" title="torrentListPages"></textarea>
                         </td>
                     </tr>
                     <tr>
-                        <td>种子详情页面规则：</td>
+                        <td>种子详情页面<br>规则：</td>
                         <td>
                             <textarea class="form-control" rows="6" id="torrentDetailPages" savedtoclear="1" title="torrentDetailPages"></textarea>
                         </td>
@@ -122,7 +115,15 @@
                             <textarea class="form-control" rows="6" id="torrentLinks" savedtoclear="1"  title="torrentLinks"></textarea>
                         </td>
                     </tr>
+                    <tr>
+                        <td>动作：</td>
+                        <td>
+                            <button class="btn btn-primary" type="button" id="page-rule-save">保存页面规则设定</button>
+                            <button class="btn btn-warning" type="button" id="page-rule-restore">还原本项默认设定</button>
+                        </td>
+                    </tr>
                 </table>
+
             </div>
             <div id="tab-config-bt-clients" class="top-nav">
                 <h1 class="page-header">远程下载</h1>

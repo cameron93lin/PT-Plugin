@@ -31,9 +31,10 @@
             myDataGrid.render();  // 清空表格
 
             for (let i=0;i<system.config.sites.length;i++) {  // 从system中获取所有rss_link并遍历
-                let site = system.config.sites[i].rss_feed;
-                for (let j=0;j<site.length;j++) {
-                    let rss = site[j];
+                let site = system.config.sites[i];
+                let rss_feed = site.rss_feed;
+                for (let j=0;j<rss_feed.length;j++) {
+                    let rss = rss_feed[j];
                     let parser = new RSSParser();
                     if (rss.link && ((rss.enable || (rss.enable = false)) === true)) {
                         parser.parseURL(rss.link,function (err,feed) {
@@ -42,12 +43,24 @@
                                     RSSBoard.cached_item.push(dic.link);
 
                                     let rObj = {};
-                                    rObj["site"] = rss.label;
-                                    rObj["title"] = dic.title;
-                                    rObj["link"] =  dic.link;
-                                    rObj["release"] = dic.pubDate;
-                                    rObj["torrent"] = dic.enclosure.url;
+                                    rObj["site"] = rss.label ? rss.label : site.name;  // 如果用户不定义label，则label值为站点名
+                                    rObj["title"] = dic.title;  // 种子名
+                                    rObj["release"] = dic.pubDate;  // 种子发布时间
+                                    /* 种子下载链接
+                                     * NexusPHP系的链接在 dic.enclosure.url 中给出
+                                     * 部分站点的RSS Feed中并没有给出链接，而是直接以dic.link的形式，请在后面修改rObj.link为正确的种子页信息
+                                     *  */
+                                    rObj["link"] =  dic.link;  // 种子详情页
+                                    rObj["torrent"] = dic.enclosure ? dic.enclosure.url : dic.link;  // 种子
 
+                                    // 根据不同站点的RSS Feeds信息进行修改
+                                    if (/ccfbits\.org/.test(rss.link)) {
+                                        let tid = dic.link.match(/feeddownload\.php\/(\d+)/)[1];
+                                        rObj["link"] = `http://ccfbits.org/details.php?id=${tid}`;
+                                        rObj["release"] = dic.content.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)[0] + " +0000";
+                                    }  // CCFBits
+
+                                    rObj["release"] = Date.parse(rObj["release"]);
                                     return rObj;
                                 } else {
                                     return null;

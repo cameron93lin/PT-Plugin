@@ -8,7 +8,7 @@ function html_parser(raw) {
         body: body,
         page: page,
     }
-};
+}
 
 function isEmpty(obj) {
     for(let key in obj) {
@@ -18,12 +18,6 @@ function isEmpty(obj) {
     return true;
 }
 
-function TimeStampFormatter(data) {
-    let unixTimestamp = new Date(data);
-    return unixTimestamp.toLocaleString();
-}
-
-
 let system = {
     log: [],  // 脚本日常使用时产生的日志信息
     config: {},   // 脚本日常使用时使用的配置信息（从chrome中获取）
@@ -32,11 +26,11 @@ let system = {
         extension_config: {
             example_extension_name: {}  // 示例
         },  // 供插件存放其设置的字典
-        pluginIconShowPages: ["*://*/torrents.php", "*://*/browse.php", "*://*/rescue.php"],  // 图标展示页面
+        pluginIconShowPages: ["*://*/torrents.php*", "*://*/browse.php*", "*://*/rescue.php*","*://*/details.php*", "*://*/plugin_details.php*", "https?://totheglory.im/t/*"],  // 图标展示页面
         contextMenuRules: {
             "torrentDetailPages": ["*://*/details.php*", "*://*/plugin_details.php*", "https?://totheglory.im/t/*"],  // 种子列表页
             "torrentListPages": ["*://*/torrents.php*", "*://*/browse.php*", "*://*/rescue.php*"],  // 种子详情页
-            "torrentDownloadLinks": ["*://*/download.php*","*://*/*.torrent","magnet:\\?xt=urn:btih:*"],  // 种子下载链接格式
+            "torrentDownloadLinks": ["*://*/download.php*","*://*/*.torrent*","magnet:\\?xt=urn:btih:*"],  // 种子下载链接格式
         },
         client: {
             default_client_id: 0,  // 默认使用BT客户端ID，为client_list序号
@@ -74,16 +68,57 @@ let system = {
             ]
         },
         sites: [
-            // TODO Site Object
             {
-                "name": "",
+                "name": "示例站点，你应该删除该项",   // 站点名称（对个人来说容易识别就行）
+                "domain": "https://pt.nexusphp.com/",  // 站点域名（唯一）
+                "template": "NexusPHP", // 站点解析模板， 应该在以下值中选取NexusPHP, DIY , NPU, ZX ,TTG, HDChina, HDCity, HDStreet, CCFBits.....
+                "info": true,  // 脚本获取用户信息（对PT站点均应启用）
+                "info_page": "https://pt.nexusphp.com/userdetails.php?id=1",  // 用户信息页（脚本会读取该页面以获取用户的个人信息）
+                "seed_page": "", // 保种页面
+                "seed_parser": "",  // 保种页面解析方法
+                "info_selector": {  // 用户信息页，脚本在获取用户信息页后使用下列语句获取信息（仅在template为DIY时需要）
+                    "id": "location.href.match(/id=(\\d+)/)[1]",   // 用户ID
+                    "username": "parser.page.find('a[href^=userdetails]').text()",  // 用户名
+                    "uploaded": "", // 上传量
+                    "downloaded": "",  // 下载量
+                    "ratio": "",     // 分享率
+                    "class": "",    // 用户等级
+                    "seedtime": "",  // 做种时间
+                    "leechtime": "",  // 下载时间
+                },
+                "info_data": {
+                    "record": [
+                        {
+                            "uploaded": "",  // 上传量
+                            "downloaded": "",  // 下载量
+                            "ratio": "",     // 分享率
+                            "class": "",    // 用户等级
+                            "seedtime": "",  // 做种时间
+                            "seedcount": "", // 做种数量  （需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+                            "seedsize": "", // 做种体积  （需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+                            "leechtime": "",  // 下载时间
+                            "updateat": "",  // 更新时间
+                        }
+                    ],
+                    "last_update": ""  // 最后更新时间
+                },
+                "rss": true,  // RSSBoard插件启用状态（站点全局）
                 "rss_feed": [
                     {
-                        "link": "",
-                        "enable": true,
-                        "label": ""
+                        "link": "",  // RSS链接
+                        "enable": true,  // 启用状态（单独）
+                        "label": ""  // 标签，未设置时为站点名称（可以使用html代码，例如 `<span class="label">示例标签</span>`）
                     },
                 ],
+                "search": true,  // Search 插件启用状态（站点全局）
+                "search_parser" : "",  // 搜索页面解析方法
+                "search_list": [
+                    {
+                        "link": "",   // 搜索链接   可以使用的统配符有 $page$, $key$
+                        "enable": true,  // 该搜索链接启用状态
+                        "label": ""  // 标签，未设置时为站点名称（可以使用html代码，例如 `<span class="label">示例标签</span>`）
+                    }
+                ]
             },
         ],
 
@@ -250,7 +285,7 @@ let system = {
                 };
                 r.onerror = function () {
                     system.showErrorMessage("配置信息加载失败");
-                    console.log("配置信息加载失败");
+                    system.writeLog("配置信息加载失败");
                 };
                 r.readAsText(restoreFile.files[0]);
                 restoreFile.value = "";
@@ -270,6 +305,7 @@ let system = {
             $("#file-config").click();
         });  // 从文件中恢复
         $("button#button-config-restore").click(() => {
+            system.writeLog("重置插件配置到默认状况");
             system.config = system.config_default;
             system.saveConfig(true);
         });  // 重置到默认状态
@@ -281,15 +317,14 @@ let system = {
             system.writeLog("Cleaned History Log.");
         });  // 清空日志
     },
-    renderHelp() {
+    renderLog() {
         chrome.storage.sync.get({log: system.log},items => {
-            system.log = items.log;
+            const log_limit = 20;
+            let show_log = system.log = items.log;
 
-            // Limit Log Array Length
-            let show_log = system.log;
-            let log_limit = 20;
-            if (show_log.length > log_limit) {  // 只显示最新的多少条日志，
-                show_log = show_log.slice(show_log.length - log_limit,show_log.length).reverse();
+            show_log = show_log.reverse();
+            if (system.log.length > log_limit) {  // 只显示最新的多少条日志，
+               show_log = show_log.slice(0,log_limit);
             }
 
             $("#system-log").text(show_log.join("\n"));
@@ -306,8 +341,10 @@ let system = {
         system.renderBtClient();  // 远程下载
         system.renderSite();  // 站点设定
         system.renderOther();  // 其他设定
-        system.renderHelp();  // 帮助/说明
-        new Clipboard('.btn-clipboard');
+        system.renderLog();  // 日志信息
+        system.loadScript("static/lib/clipboard/clipboard.min.js",function () {
+            new Clipboard('.btn-clipboard');
+        });
     },
 
     init: function () {
@@ -332,13 +369,14 @@ let system = {
         } else {
             system.showSuccessMsg("相关参数已保存。");
         }
-        // system.writeLog("System Config Changed.")
+        system.writeLog("System Config Changed.")
     },
 
     writeLog(log) {
-        let now = TimeStampFormatter(Date.now());
+        let now = Date.create(Date.now());
         system.log.push(`${now} - ${log}`);
         chrome.storage.sync.set({log:system.log});
+        system.renderLog();
     },
 
 

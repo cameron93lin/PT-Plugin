@@ -262,49 +262,81 @@ let system = {
     },
 
     init: function () {
-        $.ajaxSetup({
-            cache: true
-        });  // 启用jQuery的AJAX缓存
-
-        if (!window.location.search) window.location.search += "?tab=overview-personal-info";
-
         // 1. 获取设置并初始化所有设置
-        chrome.storage.sync.get({config: system.config_default},items => {
-            system.config = items.config;
-            system.initOptionPage();  // 配置页渲染方法
+        system.getConfig(() => {
+            if (location.protocol === "chrome-extension:") {
+                if (!window.location.search) window.location.search += "?tab=overview-personal-info";
+                system.initOptionPage();  // 配置页渲染方法
+            }
         });
     },
 
-    saveConfig(reload) {
+    getConfig(callback) {
+        chrome.storage.sync.get({config: system.config_default},items => {
+            system.config = items.config;
+            callback(system.config);
+        });
+    },  // 从chrome.storage中获取用户配置
+
+    saveConfig(reload, silence) {
         chrome.storage.sync.set({config:system.config});
         if (reload) {
             system.showSuccessMsg("参数已保存，页面会自动刷新以载入新配置。");
             setTimeout(() => {location.reload();},3000);
-        } else {
+        } else if (!silence) {
             system.showSuccessMsg("相关参数已保存。");
         }
-        system.writeLog("System Config Changed.")
-    },
+        if (!silence) {
+            system.writeLog("System Config Changed.");
+        }
+    },  // 保存用户配置到chrome.storage中
 
     writeLog(log) {
-        let now = Date.create(Date.now());
+        let now = Date.create(Date.now()).toLocaleString();   // 注意 Date.create() 不是标准方法，是ZUI引入的快速方法
         system.log.push(`${now} - ${log}`);
         chrome.storage.sync.set({log:system.log});
         system.renderLog();
     },
 
+    // 用于接收页面发送过的消息
+    requestMessage: (message, sender, callback) => {
+        // console.log(message, sender, callback);
+        switch (message.action.toLowerCase()) {
+            /*
+            case "toclipboard":
+                let copyFrom = $('<textarea/>');
+                copyFrom.text(message.content);
+                $('body').append(copyFrom);
+                copyFrom.select();
+                document.execCommand('copy');
+                copyFrom.remove();
+            */
+
+
+
+            case "options-page":
+                let search = $.extend({tab: "overview-personal-info"},message.search);
+
+                let url = "options.html?";
+                for (let key in search)  {
+                    url += `${key}=${search[key]}&`
+                }
+
+                url = url.replace(/(.+?)&?$/,"$1");
+
+                chrome.tabs.create({url: url});
+                break;
+        }
+    },
 
     showMessage: (msg,options) => {
-        new $.zui.Messager(msg, options || {}).show(); // 优先使用传入的options
+        new $.zui.Messager(msg, options || {icon: 'bell'}).show(); // 优先使用传入的options
     },
 
     showSuccessMsg: msg => {
         system.showMessage(msg,{icon: 'bell'});
     },
 
-    showInfoMessage:  msg => {
-        system.showMessage(msg,{icon: 'bell'});
-    },
     showErrorMessage: msg => {
         system.showMessage(msg,{type: 'warning'});
     },

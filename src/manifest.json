@@ -31,7 +31,8 @@
     "scripts": [
       "static/lib/jquery/jquery-1.11.0.min.js",
       "script/public.js",
-      "script/system.js"
+      "script/system.js",
+      "script/background.js"
     ]
   },
   "content_scripts": [
@@ -43,7 +44,8 @@
       "js": [
         "static/lib/jquery/jquery-1.11.0.min.js",
         "script/public.js",
-        "script/system.js"
+        "script/system.js",
+        "script/background.js"
       ]
     }
   ],

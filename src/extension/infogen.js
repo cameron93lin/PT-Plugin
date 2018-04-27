@@ -111,7 +111,7 @@
         },  // 返回搜索的Key
 
         output(info) {
-            $("textarea#gen-output").text(info);
+            $("textarea#gen-output").val(info);
         },  // 将搜索结果填入输出窗口
 
         gen_locale(subject_url) {

@@ -1,6 +1,4 @@
 (function($) {
-    // 请修改关键字 `Extension`
-
     let RSSBoard = {
         html: `<div id="tab-extension-rssboard" class="top-nav">
     <h1 class="page-header">新种聚合（RSS聚合）</h1>
@@ -18,10 +16,8 @@
     </div>
 </div>`,  // 插件渲染使用的HTML模板
 
-        config: {},  // 如果插件需要存储设定的话，使用此字典
-
         // 自定义插件方法
-        cached_item: [],  // 定义缓存列表
+        cached_item: [],  // 定义缓存列表以避免重复添加
 
         flushFeed() {
             let myDataGrid = $('#datagridExample').data('zui.datagrid');
@@ -30,6 +26,12 @@
             myDataGrid.dataSource.data = null;
             myDataGrid.render();  // 清空表格
 
+            if (system.config.sites.length === 0 ){
+                system.showErrorMessage("看起来并没有添加任何站点");
+                return;
+            }  // 未添加站点时显示
+
+            system.showMessage("正在从RSS源加载数据.........");
             for (let i=0;i<system.config.sites.length;i++) {  // 从system中获取所有rss_link并遍历
                 let site = system.config.sites[i];
                 let rss_feed = site.rss_feed;
@@ -53,7 +55,7 @@
                                     rObj["link"] =  dic.link;  // 种子详情页
                                     rObj["torrent"] = dic.enclosure ? dic.enclosure.url : dic.link;  // 种子
 
-                                    // 根据不同站点的RSS Feeds信息进行修改
+                                    // TODO 根据不同站点的RSS Feeds信息进行修改（请根据用户反馈修改）
                                     if (/ccfbits\.org/.test(rss.link)) {
                                         let tid = dic.link.match(/feeddownload\.php\/(\d+)/)[1];
                                         rObj["link"] = `http://ccfbits.org/details.php?id=${tid}`;
@@ -102,6 +104,7 @@
                             name: 'site',
                             label: '站点标签',
                             width: 0.1,
+                            html:true,
                             className:"text-center"
                         },
                         {
@@ -158,11 +161,12 @@
 
             system.loadScript("static/lib/rssparser/rss-parser.min.js",function() {
                 flushbtn.click(() => {
-                    system.showInfoMessage("正在从RSS源加载数据.........");
                     RSSBoard.flushFeed();
                 });
 
-                flushbtn.click();  //
+                flushbtn.click();  // 进入后自动点击以获取RSS源数据
+
+                // setInterval(() => {flushbtn.click()},3 * 60 * 1e3);  // 定时刷新
             });
 
         }

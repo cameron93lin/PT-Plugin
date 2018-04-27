@@ -17,7 +17,8 @@
     "clipboardRead",
     "clipboardWrite",
     "storage",
-    "contextMenus"
+    "contextMenus",
+    "notifications"
   ],
   "icons": {
     "16": "static/icon/icon.png",
@@ -28,7 +29,9 @@
   "options_page": "options.html?tab=overview-personal-info",
   "background": {
     "scripts": [
-      "static/lib/jquery/jquery-1.11.0.min.js"
+      "static/lib/jquery/jquery-1.11.0.min.js",
+      "script/public.js",
+      "script/system.js"
     ]
   },
   "content_scripts": [
@@ -38,7 +41,9 @@
       ],
       "css": [],
       "js": [
-        "static/lib/jquery/jquery-1.11.0.min.js"
+        "static/lib/jquery/jquery-1.11.0.min.js",
+        "script/public.js",
+        "script/system.js"
       ]
     }
   ],

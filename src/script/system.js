@@ -1,23 +1,3 @@
-function html_parser(raw) {
-    let doc = (new DOMParser()).parseFromString(raw, 'text/html');  // 页面解析
-    let body = doc.querySelector("body");
-    let page = $(body); // 构造 jQuery 对象
-    return {
-        raw: raw,
-        doc: doc,
-        body: body,
-        page: page,
-    }
-}
-
-function isEmpty(obj) {
-    for(let key in obj) {
-        if(obj.hasOwnProperty(key))
-            return false;
-    }
-    return true;
-}
-
 let system = {
     log: [],  // 脚本日常使用时产生的日志信息
     config: {},   // 脚本日常使用时使用的配置信息（从chrome中获取）
@@ -342,9 +322,7 @@ let system = {
         system.renderSite();  // 站点设定
         system.renderOther();  // 其他设定
         system.renderLog();  // 日志信息
-        system.loadScript("static/lib/clipboard/clipboard.min.js",function () {
-            new Clipboard('.btn-clipboard');
-        });
+        new Clipboard('.btn-clipboard');
     },
 
     init: function () {
@@ -429,3 +407,5 @@ let system = {
         system.dynamicalLoad(url,"css");
     },
 };
+
+system.init();

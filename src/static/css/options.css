@@ -52,6 +52,10 @@ table.tv  tr > td:nth-child(2) {
     padding: 20px 0;
 }
 
+.dl-client-config dt,dd {
+    margin-bottom: 10px;
+}
+
 /* 为可拖动的条目应用可移动光标类型 */
 .sortableList > .list-group-item {cursor: move}
 

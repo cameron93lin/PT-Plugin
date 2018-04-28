@@ -32,7 +32,8 @@
       "static/lib/jquery/jquery-1.11.0.min.js",
       "script/public.js",
       "script/system.js",
-      "script/background.js"
+      "script/background.js",
+      "script/client.js"
     ]
   },
   "content_scripts": [

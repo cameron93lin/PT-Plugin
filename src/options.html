@@ -8,6 +8,7 @@
     <!-- zui -->
     <link href="static/css/zui.min.css" rel="stylesheet">
     <link href="static/lib/datagrid/zui.datagrid.min.css" rel="stylesheet">
+    <link href="static/lib/chosen/chosen.min.css" rel="stylesheet">
     <link href="static/css/options.css" rel="stylesheet">
 </head>
 <body>
@@ -68,8 +69,7 @@
                         <th>更新时间</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
             <div id="tab-overview-reports" class="top-nav">
@@ -118,11 +118,135 @@
                 <h1 class="page-header">远程下载</h1>
                 <p class="hl-green">
                     添加你的远程下载工具（PT客户端）到本处，你就可以在种子页面使用本工具提供的Popup以及右键菜单向远程下载工具快速添加种子。<br>
-                    目前支持的客户端有： <strong>Transmission</strong>、<strong>µTorrent</strong>、<strong>Deluge</strong>
                 </p>
+                <button class="btn btn-primary" type="button" id="server-add"  data-toggle="modal" data-target="#server-add-modal"><i class="icon icon-plus"></i>&nbsp;增加BT客户端</button>
+                <table id="server-list" style="margin-top: 10px" class="table table-hover table-striped table-responsive">
+                </table>
+                <div class="modal fade" id="server-add-modal">
+                    <div class="modal-dialog">
+                        <div class="modal-content" id="server-add-modal-type">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+                                <h4 class="modal-title">选择新建BT客户端类型</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="input-group">
+                                            <span class="input-group-addon"><i class="icon icon-server"></i></span>
+                                            <input type="text" class="form-control" placeholder="BT客户端标签" id="tab_title">
+                                        </div>
+                                        <h2></h2>
+                                        <select data-placeholder="请选择BT客户端类型" class="chosen-select form-control" id="tab_client">
+                                            <option value=""></option>
+                                            <option>Buffalo WebUI (OLD!)</option>
+                                            <option>Deluge WebUI</option>
+                                            <option>pyrt WebUI</option>
+                                            <option>qBittorrent WebUI</option>
+                                            <option>ruTorrent WebUI</option>
+                                            <option>Torrentflux WebUI</option>
+                                            <option>Transmission WebUI</option>
+                                            <option>uTorrent WebUI</option>
+                                            <option>Vuze SwingUI</option>
+                                            <option>Vuze HTML WebUI</option>
+                                            <option>Vuze Remote WebUI</option>
+                                            <option>Tixati WebUI</option>
+                                            <option>Hadouken WebUI</option>
+                                            <option>NodeJS-rTorrent WebUI</option>
+                                            <option>Synology WebUI</option>
+                                            <option>flood WebUI</option>
+                                            <option>QNAP DownloadStation</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" id="btn-client-add-to-option">下一步</button>
+                            </div>
+                        </div>
+                        <div class="modal-content" id="server-add-modal-option" style="display:none;">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+                                <h4 class="modal-title">设置BT客户端属性</h4>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-12"  id="server-add-modal-option-context"></div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" id="btn-client-add-to-completed">完成</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="tab-config-sites" class="top-nav">
                 <h1 class="page-header">站点设定</h1>
+                <button class="btn btn-primary" type="button" id="sites-add"  data-toggle="modal" data-target="#site-add-modal"><i class="icon icon-plus"></i>&nbsp;增加站点</button>
+                <div id="sites-list" class="datagrid" style="margin-top: 10px"></div>
+                <div class="modal fade" id="site-add-modal">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+                                <h4 class="modal-title">选择新建站点类型</h4>
+                            </div>
+                            <div class="modal-body">
+                                <dl class="dl-horizontal text-overflow">
+                                    <dt>从已有解析模板新建</dt>
+                                    <dd id="site-add-template">
+                                    </dd>
+                                    <dt>从已有站点模板新建</dt>
+                                    <dd>
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>站点类型</th>
+                                                <th>站点</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td>教育网</td><td id="site-add-cernet"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>公网</td><td id="site-add-china"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>国外站点</td><td id="site-add-foreign"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>BT站点</td><td id="site-add-bt"></td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary">下一步</button>
+                            </div>
+                        </div>
+                        <div class="modal-content" style="display: none">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+                                <h4 class="modal-title">对话框标题2</h4>
+                            </div>
+                            <div class="modal-body">
+                                <h4>虞美人·春花秋月何时了 <small>五代·李煜</small></h4>
+                                <p>春花秋月何时了？往事知多少。小楼昨夜又东风，故国不堪回首月明中。<br>雕栏玉砌应犹在，只是朱颜改。问君能有几多愁？恰似一江春水向东流</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary">确定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="tab-config-other" class="top-nav">
                 <h1 class="page-header">其他设定</h1>
@@ -178,7 +302,7 @@
                 <h2>插件说明</h2>
                 <h2>捐助</h2>
                 <h2>感谢</h2>
-                <p>本项目至少使用/借鉴了以下开源项目代码或实现形式，在此表示感谢</p>
+                <p>本项目在原有0.0.8版本基础上至少使用/借鉴了以下开源项目代码或实现形式，在此表示感谢</p>
                 <table  class="table">
                     <thead>
                     <tr><th>名称</th><th>项目链接</th><th>描述</th><th>开源协议</th></tr>
@@ -186,6 +310,7 @@
                     <tbody>
                     <tr><td><strong>ZUI</strong></td><td><a href="https://github.com/easysoft/zui/" target="_blank">https://github.com/easysoft/zui/</a></td><td>开源HTML5跨屏框架 及其提供的插件库</td><td>MIT</td></tr>
                     <tr><td><strong>Rhilip/PT-help</strong></td><td><a href="https://github.com/Rhilip/PT-help" target="_blank">https://github.com/Rhilip/PT-help</a></td><td>自建自用PT站辅助API</td><td>MIT</td></tr>
+                    <tr><td><strong>bogenpirat/remote-torrent-adder</strong></td><td><a href="https://github.com/bogenpirat/remote-torrent-adder" target="_blank">https://github.com/bogenpirat/remote-torrent-adder</a></td><td>A handy Chrome extension to add torrent files to torrent clients</td><td>-</td></tr>
                     <tr><td><strong>brix/crypto-js</strong></td><td><a href="https://github.com/brix/crypto-js" target="_blank">https://github.com/brix/crypto-js</a></td><td>JavaScript library of crypto standards.</td><td>MIT</td></tr>
                     <tr><td><strong>tengattack/html2bbcode.js</strong></td><td><a href="https://github.com/tengattack/html2bbcode.js" target="_blank">https://github.com/tengattack/html2bbcode.js</a></td><td>Convert HTML to BBCode</td><td>MIT</td></tr>
                     <tr><td><strong>cburschka/xbbcode.js</strong></td><td><a href="https://github.com/cburschka/xbbcode.js" target="_blank">https://github.com/cburschka/xbbcode.js</a></td><td>JavaScript version of XBBCode</td><td>MIT</td></tr>
@@ -207,9 +332,13 @@
 <script src="static/lib/jquery/jquery-1.11.0.min.js"></script> <!-- jQuery (ZUI中的Javascript组件依赖于jQuery) -->
 <script src="static/lib/clipboard/clipboard.min.js"></script>
 <script src="static/lib/zui/zui.min.js"></script>
+<script src="static/lib/sortable/zui.sortable.min.js"></script>
 <script src="static/lib/datagrid/zui.datagrid.min.js"></script>
+<script src="static/lib/chosen/chosen.min.js"></script>
 
 <script src="script/public.js"></script>
 <script src="script/system.js"></script>
+<script src="script/options.js"></script>
+<script src="script/template.js"></script>
 </body>
 </html>

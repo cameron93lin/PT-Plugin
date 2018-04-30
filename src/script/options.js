@@ -120,16 +120,17 @@
                 let config = system.config.servers[lid];
                 config_html(config["client"],config["name"],config,lid);
                 $("#server-modal").modal();
-            })
+            });
 
             $(".server-delete").click(function () {
                 let that = $(this);
                 system.config.servers.splice(that.attr("data-id"),1);
                 system.saveConfig(false,true);
                 ClientTable();
-
-            })
+            });
+            chrome.extension.sendRequest({"action": "constructContextMenu"});
         }
+
         function config_html(client_type,name,object,lid) {
             let config = "";
             config += `<dl class="dl-horizontal text-overflow dl-client-config">
@@ -204,23 +205,21 @@
                 config += clientMap[client_type];
             }
 
-            $("#server-modal > div.modal-dialog").html(  // 直接替换modal框信息
-                `<div class="modal-content" id="server-add-modal-option">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
-                                <h4 class="modal-title">设置BT客户端属性</h4>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-md-12"  id="server-add-modal-option-context">${config}</div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary" id="btn-client-add-to-completed">完成</button>
-                            </div>
-                        </div>`
-            );
+            $("#server-modal > div.modal-dialog").html(`<div class="modal-content" id="server-add-modal-option">
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+	<h4 class="modal-title">设置BT客户端属性</h4>
+</div>
+<div class="modal-body">
+	<div class="row">
+		<div class="col-md-12" id="server-add-modal-option-context">${config}</div>
+	</div>
+</div>
+<div class="modal-footer">
+	<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+	<button type="button" class="btn btn-primary" id="btn-client-add-to-completed">完成</button>
+</div>
+</div>`);  // 直接替换modal框信息
 
             if(object) {
                 for (let l in object) {

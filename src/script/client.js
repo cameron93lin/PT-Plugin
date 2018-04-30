@@ -1,62 +1,32 @@
-system.clients.config_html = function(clienttype, name) {
-    let generalsettings = `<tbody>
-				<tr>
-					<td><span class="title">Name</span></td>
-					<td><input type="text" name="name" value="${name}" /></td>
-				</tr>
-				<tr>
-					<td><span class="title">Type</span></td>
-					<td><input type="hidden" name="client" value="${clienttype}" /> ${clienttype}</td>
-				</tr>
-				<tr>
-					<td><span class="title">Host</span></td>
-					<td><input type="text" name="host" /><br />
-						<span class="tip">The ip/hostname to connect to</span></td>
-				</tr>
-				<tr>
-					<td><span class="title">Port</span></td>
-					<td><input type="text" name="port" /><br />
-						<span class="tip">The remote port</span></td>
-				</tr>
-				<tr>
-					<td><span class="title">SSL</span></td>
-					<td><input type="checkbox" name="hostsecure" /><br />
-						<span class="tip">Check if the WebUI runs on SSL (http<strong>s</strong>://). Set the Port to 443!</span></td>
-				</tr>
-				<tr>
-					<td><span class="title">Username</span></td>
-					<td><input type="text" name="login" /><br />
-						<span class="tip">Login name of the WebUI</span></td>
-				</tr>
-				<tr>
-					<td><span class="title">Password</span></td>
-					<td><input type="password" name="password" /><br />
-						<span class="tip">Password of the WebUI</span></td>
-				</tr>
-			</tbody>`;
+function b64_encode(input) {
+    var _keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+    var output = "";
+    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+    var i = 0;
 
-    var clientMap = {
-        "ruTorrent WebUI" : RTA.clients.config.rutorrent,
-        "Torrentflux WebUI" : RTA.clients.config.torrentflux,
-        "uTorrent WebUI" : RTA.clients.config.utorrent,
-        "Deluge WebUI" : RTA.clients.config.deluge,
-        "Hadouken WebUI" : RTA.clients.config.hadouken,
-        "flood WebUI" : RTA.clients.config.flood,
-        "QNAP DownloadStation" : RTA.clients.config.qnap,
-        "qBittorrent WebUI" : RTA.clients.config.qbittorrent
-    };
+    while (i < input.length) {
 
-    var config = "<table>" + RTA.clients.config.generalsettings.replace(/\{clienttype\}/g, client).replace(/\{name\}/g, name);
+        chr1 = input[i++];
+        chr2 = input[i++];
+        chr3 = input[i++];
 
-    if(clientMap.hasOwnProperty(client))
-        config += clientMap[client];
+        enc1 = chr1 >> 2;
+        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 = chr3 & 63;
 
+        if (isNaN(chr2)) {
+            enc3 = enc4 = 64;
+        } else if (isNaN(chr3)) {
+            enc4 = 64;
+        }
 
-
-
-    return config
+        output = output +
+            _keyStr.charAt(enc1) + _keyStr.charAt(enc2) +
+            _keyStr.charAt(enc3) + _keyStr.charAt(enc4);
+    }
+    return output;
 }
-
 
 // src/btclient/BuffaloWebUI.js
 system.clients.buffaloAdder = function(server, data, torrentname) {

@@ -53,15 +53,17 @@ system.createContextMenus = () => {
                 });
                 menuItemIndexToServerIndex[thisId] = i;
             }
-            chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
-            let allId = chrome.contextMenus.create({
-                "title": "发送到 所有下载服务器",
-                "contexts": [ "link" ],
-                "parentId": contextMenuId,
-                "onclick": system.genericOnClick,
-                "targetUrlPatterns": config.torrentDownloadLinks
-            });
-            menuItemIndexToServerIndex[allId] = -1;
+            if (servers.length > 1) {
+                chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
+                let allId = chrome.contextMenus.create({
+                    "title": "发送到 所有下载服务器",
+                    "contexts": [ "link" ],
+                    "parentId": contextMenuId,
+                    "onclick": system.genericOnClick,
+                    "targetUrlPatterns": config.torrentDownloadLinks
+                });
+                menuItemIndexToServerIndex[allId] = -1;
+            }
             chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
         }
 
@@ -171,7 +173,6 @@ system.dispatchTorrent = (server, data, name, label, dir) => {
     }
 };
 
-
 system.displayResponse = function(title, message, error) {
     system.showNotifications({
         title: title,
@@ -196,5 +197,12 @@ system.showNotifications = (opts) => {
     setTimeout(function(){chrome.notifications.clear(id,() => {});}, 5 * 1e3);
 };
 
-
 system.createContextMenus();
+
+chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+    system.getConfig(config => {
+        if(request.action === "constructContextMenu") {
+            system.createContextMenus();
+        }
+    })
+});

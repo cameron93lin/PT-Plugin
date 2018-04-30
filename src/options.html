@@ -119,69 +119,8 @@
                 <p class="hl-green">
                     添加你的远程下载工具（PT客户端）到本处，你就可以在种子页面使用本工具提供的Popup以及右键菜单向远程下载工具快速添加种子。<br>
                 </p>
-                <button class="btn btn-primary" type="button" id="server-add"  data-toggle="modal" data-target="#server-add-modal"><i class="icon icon-plus"></i>&nbsp;增加BT客户端</button>
-                <table id="server-list" style="margin-top: 10px" class="table table-hover table-striped table-responsive">
-                </table>
-                <div class="modal fade" id="server-add-modal">
-                    <div class="modal-dialog">
-                        <div class="modal-content" id="server-add-modal-type">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
-                                <h4 class="modal-title">选择新建BT客户端类型</h4>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="icon icon-server"></i></span>
-                                            <input type="text" class="form-control" placeholder="BT客户端标签" id="tab_title">
-                                        </div>
-                                        <h2></h2>
-                                        <select data-placeholder="请选择BT客户端类型" class="chosen-select form-control" id="tab_client">
-                                            <option value=""></option>
-                                            <option>Buffalo WebUI (OLD!)</option>
-                                            <option>Deluge WebUI</option>
-                                            <option>pyrt WebUI</option>
-                                            <option>qBittorrent WebUI</option>
-                                            <option>ruTorrent WebUI</option>
-                                            <option>Torrentflux WebUI</option>
-                                            <option>Transmission WebUI</option>
-                                            <option>uTorrent WebUI</option>
-                                            <option>Vuze SwingUI</option>
-                                            <option>Vuze HTML WebUI</option>
-                                            <option>Vuze Remote WebUI</option>
-                                            <option>Tixati WebUI</option>
-                                            <option>Hadouken WebUI</option>
-                                            <option>NodeJS-rTorrent WebUI</option>
-                                            <option>Synology WebUI</option>
-                                            <option>flood WebUI</option>
-                                            <option>QNAP DownloadStation</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary" id="btn-client-add-to-option">下一步</button>
-                            </div>
-                        </div>
-                        <div class="modal-content" id="server-add-modal-option" style="display:none;">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
-                                <h4 class="modal-title">设置BT客户端属性</h4>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-md-12"  id="server-add-modal-option-context"></div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary" id="btn-client-add-to-completed">完成</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <button class="btn btn-primary" type="button" id="server-add"><i class="icon icon-plus"></i>&nbsp;增加BT客户端</button>
+                <table id="server-list" style="margin-top: 10px" class="table table-hover table-striped table-responsive"></table>
             </div>
             <div id="tab-config-sites" class="top-nav">
                 <h1 class="page-header">站点设定</h1>

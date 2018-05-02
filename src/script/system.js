@@ -10,8 +10,25 @@ let system = {
         },  // 供插件存放其设置的字典
         pluginIconShowPages: ["*://*/torrents.php*", "*://*/browse.php*", "*://*/rescue.php*","*://*/details.php*", "*://*/plugin_details.php*", "https?://totheglory.im/t/*"],  // 图标展示页面
         torrentDownloadLinks: ["*://*/download.php*","*://*/*.torrent*","magnet:*"],  // 种子下载链接格式（仅在这些链接中右键点击才显示下载功能）
-        servers: [],// 列表中第一个会被认为是默认服务器
-        sites: [],
+        servers: [],  // 用来存放下载服务器
+        sites: [],   // 用来存放站点信息
+        info_update_time: 0,  // 记录更新时间
+        info_record: [
+            /**    {
+            "site": "", // 站点标签名
+            "username": "Admin",  // 用户名
+            "uploaded": "",  // 上传量
+            "downloaded": "",  // 下载量
+            "ratio": "",     // 分享率
+            "class": "",    // 用户等级
+            "seedtime": "",  // 做种时间
+            "seedcount": "", // 做种数量  （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+            "seedsize": "", // 做种体积   （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+            "leechtime": "",  // 下载时间
+            "updateat": 0,  // 更新时间（以timestamp形式）
+        }
+             **/
+        ],      //  用来存放站点用户记录信息
     },
 
     saveFileAs(fileName, fileData, options) {

@@ -5,79 +5,75 @@ if (!XMLHttpRequest.prototype.sendAsBinary) {
             ui8Data[nIdx] = sData.charCodeAt(nIdx) & 0xff;
         }
         /* send as ArrayBufferView...: */
-        this.send(ui8Data);
-        /* ...or as ArrayBuffer (legacy)...: this.send(ui8Data.buffer); */
+        this.send(ui8Data);   /* ...or as ArrayBuffer (legacy)...: this.send(ui8Data.buffer); */
     };
 }
-
-// 为插件添加前端监听功能
 
 // 右键菜单
 let menuItemIndexToServerIndex = {};
 
 system.createContextMenus = () => {
-    chrome.contextMenus.removeAll();
+    if (chrome.contextMenus) {  // 首先判断 chrome.contextMenus 是否存在，然后再做添加，以免console报错
+        chrome.contextMenus.removeAll();
+        system.getConfig(config => {
+            let contextMenuId = chrome.contextMenus.create({
+                "title": "PT 助手",
+                "contexts": ["link","selection"],
+            });
+            menuItemIndexToServerIndex[contextMenuId] = 0;
 
-    system.getConfig(config => {
-        let contextMenuId = chrome.contextMenus.create({
-            "title": "PT 助手",
-            "contexts": ["link","selection"],
-        });
-        menuItemIndexToServerIndex[contextMenuId] = 0;
+            chrome.contextMenus.create({
+                "title": "聚合搜索 '%s' 相关的种子",
+                "contexts": ["selection"],
+                "parentId": contextMenuId,
+                "onclick": (data, tab) => {
+                    system.requestMessage({
+                        action: "options-page",
+                        search: {
+                            tab: "extension-adv-search",
+                            search: data.selectionText
+                        },
+                    });
+                }
+            });
 
-        chrome.contextMenus.create({
-            "title": "聚合搜索 '%s' 相关的种子",
-            "contexts": ["selection"],
-            "parentId": contextMenuId,
-            "onclick": (data, tab) => {
-                system.requestMessage({
-                    action: "options-page",
-                    search: {
-                        tab: "extension-adv-search",
-                        search: data.selectionText
-                    },
-                });
-            }
-        });
-
-        let servers = config.servers;
-        if (servers.length) {   // 如果用户添加的Remote WebUI
-            chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
-            for(let i =0 ; i< servers.length ; i++) {
-                let thisId = chrome.contextMenus.create({
-                    "title": "发送到 " + servers[i].name,
-                    "contexts": [ "link" ],
-                    "parentId": contextMenuId,
-                    "onclick": system.genericOnClick,
-                    "targetUrlPatterns": config.torrentDownloadLinks
-                });
-                menuItemIndexToServerIndex[thisId] = i;
-            }
-            if (servers.length > 1) {
+            let servers = config.servers;
+            if (servers.length) {   // 如果用户添加的Remote WebUI
                 chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
-                let allId = chrome.contextMenus.create({
-                    "title": "发送到 所有下载服务器",
-                    "contexts": [ "link" ],
-                    "parentId": contextMenuId,
-                    "onclick": system.genericOnClick,
-                    "targetUrlPatterns": config.torrentDownloadLinks
-                });
-                menuItemIndexToServerIndex[allId] = -1;
+                for(let i =0 ; i< servers.length ; i++) {
+                    let thisId = chrome.contextMenus.create({
+                        "title": "发送到 " + servers[i].name,
+                        "contexts": [ "link" ],
+                        "parentId": contextMenuId,
+                        "onclick": system.genericOnClick,
+                        "targetUrlPatterns": config.torrentDownloadLinks
+                    });
+                    menuItemIndexToServerIndex[thisId] = i;
+                }
+                if (servers.length > 1) {
+                    chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
+                    let allId = chrome.contextMenus.create({
+                        "title": "发送到 所有下载服务器",
+                        "contexts": [ "link" ],
+                        "parentId": contextMenuId,
+                        "onclick": system.genericOnClick,
+                        "targetUrlPatterns": config.torrentDownloadLinks
+                    });
+                    menuItemIndexToServerIndex[allId] = -1;
+                }
+                chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
             }
-            chrome.contextMenus.create({"type" : "separator", "contexts": [ "link" ], "parentId": contextMenuId,"targetUrlPatterns": config.torrentDownloadLinks});
-        }
 
-        chrome.contextMenus.create({
-            "title": "打开配置页",
-            "contexts": ["link","selection","page"],
-            "parentId": contextMenuId,
-            "onclick": (data,tab) => {
-                system.requestMessage({
-                    action: "options-page"
-                });
-            }
+            chrome.contextMenus.create({
+                "title": "打开配置页",
+                "contexts": ["link","selection","page"],
+                "parentId": contextMenuId,
+                "onclick": (data,tab) => {
+                    chrome.extension.sendRequest({action: "options-page"});
+                }
+            });
         });
-    })
+    }
 };
 
 system.genericOnClick = (info,tab) => {
@@ -181,7 +177,7 @@ system.displayResponse = function(title, message, error) {
 };
 
 // Chrome右下角显示漂浮信息
-system.showNotifications = (opts) => {
+system.showNotifications = opts => {
     opts = $.extend({
         type: "basic",
         iconUrl: "static/icon/icon-128.png",
@@ -199,10 +195,14 @@ system.showNotifications = (opts) => {
 
 system.createContextMenus();
 
+// 用于接收页面发送过的消息
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     system.getConfig(config => {
-        if(request.action === "constructContextMenu") {
-            system.createContextMenus();
+        console.log(message, sender, callback);
+        switch (message.action) {
+            case "constructContextMenu":  // 重写右键菜单
+                system.createContextMenus();
+                break;
         }
     })
 });

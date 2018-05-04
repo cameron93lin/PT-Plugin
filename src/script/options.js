@@ -68,7 +68,33 @@
 
         system.targetDefaultClick();
     };  // 左侧导航渲染方法
-    system.renderPersonInfo = () => {};
+    system.renderPersonInfo = () => {
+        let show_html = "<tr align='center'><td colspan='13'>No any Site Added</td></tr>";
+        let user_info = system.config.info_record;
+        if (user_info) {
+            let site_list = Array.from(new Set(user_info.map(dic => dic.site)));
+            let site_data = site_list.map(site => {
+                let user_site_info  = user_info.filter(dic => dic.site === site).sort((a,b) => b.updateat - a.updateat)[0]; // 获取最新的信息
+                let site_info = system.config.sites.filter(dic => dic.name === site)[0];   // 获取站点信息
+
+                let rObj = user_site_info;
+                rObj["domain"] = site_info.domain;
+                return rObj;
+            });
+            show_html = site_data.reduce((a,b) => {
+                return a+= `<tr>
+<td><img src="${b.domain}favicon.ico" width="16px" height="16px"><a href="${b.domain}" target="_blank">${b.site}</a></td>
+<td>${b.uid}</td><td>${b.username}</td>
+<td>${FileBytestoSize(b.uploaded)}</td><td>${FileBytestoSize(b.downloaded)}</td><td>${b.ratio}</td><td>${b.bonus}</td>
+<td>${b.seedcount}</td><td>${FileBytestoSize(b.seedsize)}</td>
+<td>${b.seedtime}</td><td>${b.leechtime}</td>
+<td>${b.class}</td><td>${Date.create(b.updateat).toLocaleString()}</td>
+</tr>`
+            },"");
+        }
+
+        $("#overview-data").html(show_html);
+    };
     system.renderReports = () => {};
     system.renderRules = () => {
         $('#config-extension').sortable({
@@ -128,7 +154,6 @@
                 system.saveConfig(false,true);
                 ClientTable();
             });
-            chrome.extension.sendRequest({"action": "constructContextMenu"});
         }
 
         function config_html(client_type,name,object,lid) {

@@ -1,10 +1,10 @@
 let system = {
     log: [],  // 脚本日常使用时产生的日志信息
+    clients: {},   // 具体的种子添加方法（在script/clients.js中导入）
+    template: {},  // 具体的站点解析方法（在script/template.js中导入）
     config: {},   // 脚本日常使用时使用的配置信息（从chrome中获取）
-    clients: {},   // 具体的种子添加方法（从RTA中）
-    template: {},  // 具体的站点解析方法
     config_default: {    // 脚本第一次运行时（即获取的配置为空时）或重置时导入的配置信息
-        extension: [],   // 从 extension/init.json 中导入
+        extension: [],   // 从 extension/init.json 中导入基本插件设置
         extension_config: {
             example_extension_name: {}  // 示例
         },  // 供插件存放其设置的字典
@@ -14,20 +14,22 @@ let system = {
         sites: [],   // 用来存放站点信息
         info_update_time: 0,  // 记录更新时间
         info_record: [
-            /**    {
-            "site": "", // 站点标签名
-            "username": "Admin",  // 用户名
-            "uploaded": "",  // 上传量
-            "downloaded": "",  // 下载量
-            "ratio": "",     // 分享率
-            "class": "",    // 用户等级
-            "seedtime": "",  // 做种时间
-            "seedcount": "", // 做种数量  （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
-            "seedsize": "", // 做种体积   （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
-            "leechtime": "",  // 下载时间
-            "updateat": 0,  // 更新时间（以timestamp形式）
-        }
-             **/
+            /** 需要插入的记录信息示例
+            {
+                "site": "", // 站点标签名
+                "username": "Admin",  // 用户名
+                "uploaded": "",  // 上传量
+                "downloaded": "",  // 下载量
+                "ratio": "",     // 分享率
+                "class": "",    // 用户等级
+                "bonus": "",    // 	魔力/积分
+                "seedtime": "",  // 做种时间
+                "seedcount": "", // 做种数量  （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+                "seedsize": "", // 做种体积   （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+                "leechtime": "",  // 下载时间
+                "updateat": 0,  // 更新时间（以timestamp形式）
+            }
+            */
         ],      //  用来存放站点用户记录信息
     },
 
@@ -66,36 +68,25 @@ let system = {
         }
     },
 
-    init: function () {
-        // 1. 获取设置并初始化所有设置
-        system.getConfig(() => {
-            if (location.protocol === "chrome-extension:" && location.pathname === "/options.html") {
-                if (!window.location.search) window.location.search += "?tab=overview-personal-info";
-                system.initOptionPage();  // 配置页渲染方法
-            }
-        });
-    },
-
     getConfig(callback) {
         chrome.storage.sync.get({config: system.config_default},items => {
             system.config = items.config;
-            localStorage.setItem("servers",system.config.servers);
-            callback(system.config);
+            // localStorage.setItem("servers",system.config.servers);
+            callback(system.config);  // 提供config给回调函数
         });
     },  // 从chrome.storage中获取用户配置
 
-    saveConfig(reload, silence) {
+    saveConfig(reload, silence, log_text) {
         localStorage.setItem("servers",system.config.servers);
-        chrome.storage.sync.set({config:system.config});
+        chrome.storage.sync.set({config:system.config});  // 保存设定
+        chrome.extension.sendRequest({"action": "constructContextMenu"});  // 重写右键菜单
         if (reload) {
             system.showSuccessMsg("参数已保存，页面会自动刷新以载入新配置。");
             setTimeout(() => {location.reload();},3000);
         } else if (!silence) {
             system.showSuccessMsg("相关参数已保存。");
         }
-        if (!silence) {
-            system.writeLog("System Config Changed.");
-        }
+        system.writeLog(log_text || "System Config Changed.");
     },  // 保存用户配置到chrome.storage中
 
     writeLog(log) {

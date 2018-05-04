@@ -28,7 +28,7 @@ const time_regen_replace = /-(\d{2})[^\d]+?(\d{2}):/;
 /** 将字符串形式的文件大小转换为Bytes
  * @return {number}
  */
-function FileSizetoLength(size) {
+function FileSizetoBytes(size) {
     let _size_raw_match = size.match(/^([\d.]+)[^TGMK]?([TGMK]?i?B)$/);
     if (_size_raw_match) {
         let _size_num = parseFloat(_size_raw_match[1]);
@@ -47,4 +47,28 @@ function FileSizetoLength(size) {
         }
     }
     return size;
+}
+
+/** 将Bytes形式的文件大小转换为字符串
+ * @return {string}
+ */
+function FileBytestoSize(bytes) {
+    var ret;
+    var kilobyte = 1024;
+    var megabyte = 1024 * 1024;
+    var gigabyte = 1024 * 1024 * 1024;
+    var terabyte = 1024 * 1024 * 1024 * 1024;
+
+    if ((bytes >= 0) && (bytes < kilobyte)) {
+        ret = bytes + ' B';
+    } else if ((bytes >= kilobyte) && (bytes < megabyte)) {
+        ret = (bytes / kilobyte).toFixed(2) + ' KB';
+    } else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+        ret = (bytes / megabyte).toFixed(2) + ' MB';
+    } else if ((bytes >= gigabyte) && (bytes < terabyte)) {
+        ret = (bytes / gigabyte).toFixed(2) + ' GB';
+    } else if (bytes >= terabyte) {
+        ret = (bytes / terabyte).toFixed(2) + ' TB';
+    }
+    return ret
 }

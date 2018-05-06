@@ -71,6 +71,7 @@
 
                             // 更新数据表格
                             myDataGrid.dataSource.array = myDataGrid.dataSource.array.concat(item_list);
+                            myDataGrid.setPager({recPerPage: Math.min(myDataGrid.dataSource.array.length, 100)});
                             myDataGrid.dataSource.data = null;
                             myDataGrid.render();
 

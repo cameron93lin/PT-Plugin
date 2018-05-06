@@ -53,11 +53,11 @@ function FileSizetoBytes(size) {
  * @return {string}
  */
 function FileBytestoSize(bytes) {
-    var ret;
-    var kilobyte = 1024;
-    var megabyte = 1024 * 1024;
-    var gigabyte = 1024 * 1024 * 1024;
-    var terabyte = 1024 * 1024 * 1024 * 1024;
+    let ret;
+    let kilobyte = 1024;
+    let megabyte = 1024 * 1024;
+    let gigabyte = 1024 * 1024 * 1024;
+    let terabyte = 1024 * 1024 * 1024 * 1024;
 
     if ((bytes >= 0) && (bytes < kilobyte)) {
         ret = bytes + ' B';
@@ -71,4 +71,34 @@ function FileBytestoSize(bytes) {
         ret = (bytes / terabyte).toFixed(2) + ' TB';
     }
     return ret
+}
+
+function makeRequest(method, url) {
+    return new Promise(function (resolve, reject) {
+        let xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.onload = function () {
+            if (this.status >= 200 && this.status < 300) {
+                let parser = html_parser(xhr.responseText);
+                resolve({
+                    xhr: xhr,
+                    doc: parser.doc,
+                    body: parser.body,
+                    page: parser.page,
+                });
+            } else {
+                reject({
+                    status: this.status,
+                    statusText: xhr.statusText
+                });
+            }
+        };
+        xhr.onerror = function () {
+            reject({
+                status: this.status,
+                statusText: xhr.statusText
+            });
+        };
+        xhr.send();
+    });
 }

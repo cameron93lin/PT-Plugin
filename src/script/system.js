@@ -1,5 +1,24 @@
 let system = {
     log: [],  // 脚本日常使用时产生的日志信息
+    info_record: [
+        /** 需要插入的记录信息示例
+         {
+             "site": "", // 站点标签名
+             "username": "Admin",  // 用户名
+             "uploaded": "",  // 上传量
+             "downloaded": "",  // 下载量
+             "ratio": "",     // 分享率
+             "class": "",    // 用户等级
+             "bonus": "",    // 	魔力/积分
+             "seedtime": "",  // 做种时间
+             "seedcount": "", // 做种数量  （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+             "seedsize": "", // 做种体积   （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
+             "leechtime": "",  // 下载时间
+             "updateat": 0,  // 更新时间（以timestamp形式）
+         }
+         */
+    ],      //  用来存放站点用户记录信息
+    info_update_time: 0,  // 记录更新时间
     clients: {},   // 具体的种子添加方法（在script/clients.js中导入）
     template: {},  // 具体的站点解析方法（在script/template.js中导入）
     config: {},   // 脚本日常使用时使用的配置信息（从chrome中获取）
@@ -8,29 +27,10 @@ let system = {
         extension_config: {
             example_extension_name: {}  // 示例
         },  // 供插件存放其设置的字典
-        pluginIconShowPages: ["*://*/torrents.php*", "*://*/browse.php*", "*://*/rescue.php*","*://*/details.php*", "*://*/plugin_details.php*", "https?://totheglory.im/t/*"],  // 图标展示页面
-        torrentDownloadLinks: ["*://*/download.php*","*://*/*.torrent*","magnet:*"],  // 种子下载链接格式（仅在这些链接中右键点击才显示下载功能）
+        pluginIconShowPages: ["*://*/torrents.php*", "*://*/browse.php*", "*://*/rescue.php*", "*://*/details.php*", "*://*/plugin_details.php*", "https?://totheglory.im/t/*"],  // 图标展示页面
+        torrentDownloadLinks: ["*://*/download.php*", "*://*/*.torrent*", "magnet:*"],  // 种子下载链接格式（仅在这些链接中右键点击才显示下载功能）
         servers: [],  // 用来存放下载服务器
         sites: [],   // 用来存放站点信息
-        info_update_time: 0,  // 记录更新时间
-        info_record: [
-            /** 需要插入的记录信息示例
-            {
-                "site": "", // 站点标签名
-                "username": "Admin",  // 用户名
-                "uploaded": "",  // 上传量
-                "downloaded": "",  // 下载量
-                "ratio": "",     // 分享率
-                "class": "",    // 用户等级
-                "bonus": "",    // 	魔力/积分
-                "seedtime": "",  // 做种时间
-                "seedcount": "", // 做种数量  （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
-                "seedsize": "", // 做种体积   （例如需要从getusertorrentlistajax.php?userid=$id$&type=seeding）中获取（NexusPHP）
-                "leechtime": "",  // 下载时间
-                "updateat": 0,  // 更新时间（以timestamp形式）
-            }
-            */
-        ],      //  用来存放站点用户记录信息
     },
 
     saveFileAs(fileName, fileData, options) {
@@ -94,6 +94,23 @@ let system = {
         system.log.push(`${now} - ${log}`);
         chrome.storage.sync.set({log:system.log});
         system.renderLog();
+    },
+
+    getRecord() {
+        return JSON.parse(localStorage.getItem("info_record"));
+    },
+
+    removeRecord(sitename) {
+        let info_record = system.getRecord().filter(dic => dic.site !== sitename);
+        localStorage.setItem("info_record", JSON.stringify(info_record));
+    },
+
+    saveRecord(new_record) {
+        let info_record = system.getRecord();
+        if (typeof new_record !== "undefined") {
+            info_record.push(new_record);
+        }
+        localStorage.setItem("info_record", JSON.stringify(info_record));
     },
 
     // 用于接收页面发送过的消息

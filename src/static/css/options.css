@@ -42,6 +42,11 @@ body {
 }
 
 /* 选项表格设定 */
+table.table-site tr > td:nth-child(1) {
+    width: 12%;
+}
+
+
 table.tv  tr > td:nth-child(1) {
     padding: 20px 20px 20px 20px;
     width: 12%;
@@ -52,8 +57,14 @@ table.tv  tr > td:nth-child(2) {
     padding: 20px 0;
 }
 
-.dl-client-config dt,dd {
-    margin-bottom: 10px;
+@media (min-width: 768px) {
+    .dl-horizontal dt {
+        width: 120px;
+    }
+
+    .dl-horizontal dd {
+        margin-left: 130px
+    }
 }
 
 /* 为可拖动的条目应用可移动光标类型 */

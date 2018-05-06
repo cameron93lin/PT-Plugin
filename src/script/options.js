@@ -70,15 +70,14 @@
     };  // 左侧导航渲染方法
     system.renderPersonInfo = () => {
         let show_html = "<tr align='center'><td colspan='13'>No any Site Added</td></tr>";
-        let user_info = system.config.info_record;
+
+        let user_info = system.getRecord();
         if (user_info) {
             let site_list = Array.from(new Set(user_info.map(dic => dic.site)));
             let site_data = site_list.map(site => {
-                let user_site_info  = user_info.filter(dic => dic.site === site).sort((a,b) => b.updateat - a.updateat)[0]; // 获取最新的信息
+                let rObj = user_info.filter(dic => dic.site === site).sort((a, b) => b.updateat - a.updateat)[0]; // 获取最新的信息
                 let site_info = system.config.sites.filter(dic => dic.name === site)[0];   // 获取站点信息
-
-                let rObj = user_site_info;
-                rObj["domain"] = site_info.domain;
+                rObj["domain"] = site_info ? site_info.domain : "#";
                 return rObj;
             });
             show_html = site_data.reduce((a,b) => {
@@ -334,7 +333,322 @@
             $("#server-modal").modal();
         });
     };
-    system.renderSite = () => {};
+    system.renderSite = () => {
+        if ($("#site-modal").length === 0) {
+            $("body").append(`<div class="modal fade" id="site-modal"><div class="modal-dialog"></div></div>`);
+        }
+
+        function SiteTable() {
+            let table = `<thead><tr><th>站点标签</th><th>域名</th><th>插件启用状况</th><th>动作</th></tr></thead>`;
+
+            if (system.config.sites.length === 0) {
+                table += `<tbody><tr align="center"><td colspan="4">No Sites Added</td></tr></tbody>`
+            } else {
+                let tr_list = system.config.sites.map((dic, index) => {
+                    return `<tr>
+<td><img src="${dic.domain}favicon.ico" width="16px" height="16px">${dic.name}</td>
+<td>${dic.domain}</td>
+<td>
+<div class="switch switch-inline">
+  <input type="checkbox" name="info" ${dic.info ? "checked" : ""}>
+  <label>个人信息&nbsp;&nbsp;&nbsp;</label>
+</div>
+<div class="switch switch-inline">
+  <input type="checkbox" name="rss" ${dic.rss ? "checked" : ""}>
+  <label>RSS&nbsp;&nbsp;&nbsp;</label>
+</div>
+<div class="switch switch-inline" >
+  <input type="checkbox" name="search" ${dic.search ? "checked" : ""}>
+  <label>聚合搜索&nbsp;&nbsp;&nbsp;</label>
+</div>
+</div>
+<div class="switch switch-inline">
+  <input type="checkbox" name="signin" ${dic.signin ? "checked" : ""}>
+  <label>签到&nbsp;&nbsp;&nbsp;</label>
+</div>
+</td>
+<td>
+<a href="${dic.domain}" target="_blank"><i class="icon icon-share"></i></a>
+<a href="#" data-id="${index}" class="sites-edit"><i class="icon icon-edit"></i></a>
+<a href="#" data-id="${index}" class="sites-delete"><i class="icon icon-remove-sign"></i></a>
+</td></tr>`
+                });
+                table += `<tbody>${tr_list.join("")}</tbody>`;
+            }
+
+            $("#sites-list").html(table);
+
+            $(".sites-edit").click(function () {
+                let that = $(this);
+                let sid = that.attr("data-id");
+                let config = system.config.sites[sid];
+                render_site_html(config);
+                $("#site-modal").modal();
+            });
+
+            $(".sites-delete").click(function () {
+                let that = $(this);
+                system.removeRecord(system.config.sites[that.attr("data-id")].name);
+                system.config.sites.splice(that.attr("data-id"), 1);
+                system.saveConfig(false, true);
+                SiteTable();
+            });
+        }
+
+        SiteTable();
+
+        let render_site_html = (config) => {
+            let site_tr = dic => {
+                dic = $.extend({link: "", enable: true, label: ""}, dic);
+                return `<tr class="site-extension-info">
+<td><div class="switch">
+  <input type="checkbox" name="enable" ${dic.enable ? "checked" : ""}>
+  <label>&nbsp;</label>
+</div></td>
+<td>
+<div class="input-control">
+  <input id="inputAccountExample2" type="text" class="form-control" name="label" value="${dic.label}">
+</div>
+</td>
+<td><div class="input-control">
+  <input id="inputAccountExample2" type="text" class="form-control" name="link" value="${dic.link}">
+</div></td>
+<td>
+<a href="#" class="site-tr-remove"><i class="icon icon-remove-sign"></i></a>
+</td>
+</tr>`
+            };
+
+            $("#site-modal > div.modal-dialog").html(`<div class="modal-content" id="site-modal-option">
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+	<h4 class="modal-title">设置站点属性</h4>
+</div>
+<div class="modal-body">
+	<div class="panel-group" id="accordionPanels" aria-multiselectable="true">
+  <div class="panel panel-default">
+    <div class="panel-heading" id="headingOne">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordionPanels" href="#collapseOne">
+          站点基本设置
+        </a>
+      </h4>
+    </div>
+    <div id="collapseOne" class="panel-collapse collapse in">
+      <div class="panel-body"><dl class="dl-horizontal text-overflow dl-client-config">
+<dt>站点标签</dt><dd><input type="text" class="form-control" name="name" value="${config.name}"><p>一个对你来说容易辨识站点的标签</p></dd>
+<dt>域名</dt><dd><input class="form-control" name="domain" value="${config.domain}"><p>站点的域名，应该以http开头，并注意在最后由 '/'结束</p></dd>
+<dt>基本模板</dt><dd><input class="form-control" name="template" value="${config.template}" disabled></dd>
+</dl></div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading" id="headingTwo">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" data-parent="#accordionPanels" href="#collapseTwo">
+          站点信息获取方法
+        </a>
+      </h4>
+    </div>
+    <div id="collapseTwo" class="panel-collapse collapse">
+      <div class="panel-body">
+      <p>除非你是从DIY开始建立一个站点的解析方法，一般这个不需要做任何修改，直接略过就行</p>
+      <textarea class="form-control" id="site-info-parser" rows="6"></textarea></div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading" id="headingThree">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" data-parent="#accordionPanels" href="#collapseThree">
+          站点RSS方法（新种聚合插件）
+        </a>
+      </h4>
+    </div>
+    <div id="collapseThree" class="panel-collapse collapse">
+      <div class="panel-body">
+      <p>你可以在这里设置多条RSS链接供新种聚合插件使用，请注意，RSS链接请使用下载链接以便于下载推送。另多条RSS链接订阅的种子请不要有交集以免订阅失败</p>
+      <table class="table" id="site-rss">
+      <thead>
+      <tr>
+      <th>启用</th>
+      <th>标签名</th>
+      <th>RSS链接</th>
+      <th>删除</th>
+      
+</tr>
+</thead>
+      <tbody>
+      ${config.rss_feed.map(dic => site_tr(dic)).join("")}
+      <tr align="center"><td colspan="4"><a href="#" class="add-tr"><i class="icon icon-plus"></i></a></td></tr>
+</tbody>
+</table>
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading" id="headingFour">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" data-parent="#accordionPanels" href="#collapseFour">
+          站点搜索方法（多站聚合搜索插件）
+        </a>
+      </h4>
+    </div>
+    <div id="collapseFour" class="panel-collapse collapse">
+      <div class="panel-body">
+<p>站点聚合搜索方法，供多站聚合搜索插件使用，你可以使用<code>$key$</code>作为搜索关键词的通用匹配式。</p>
+<table class="table" id="site-advsearch">
+      <thead>
+      <tr>
+      <th>启用</th>
+      <th>标签名</th>
+      <th>搜索链接</th>
+      <th>删除</th>
+      
+</tr>
+</thead>
+      <tbody>
+      ${config.search_list.map(dic => site_tr(dic)).join("")}
+      <tr align="center"><td colspan="4"><a href="#" class="add-tr"><i class="icon icon-plus"></i></a></td></tr>
+</tbody>
+</table>
+<hr>
+<p>站点搜索页解析方法，除非你是从DIY新建或者已有解析方法不能满足使用，否则留空即可。</p>
+<textarea class="form-control" id="site-search-parser" rows="6"></textarea>
+      
+      
+      
+      
+</div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading" id="headingFive">
+      <h4 class="panel-title">
+        <a class="collapsed" data-toggle="collapse" data-parent="#accordionPanels" href="#collapseFive">
+          站点签到方法（批量签到插件）
+        </a>
+      </h4>
+    </div>
+    <div id="collapseFive" class="panel-collapse collapse">
+      <div class="panel-body">暂不支持</div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="modal-footer">
+	<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+	<button type="button" class="btn btn-primary" id="btn-site-add-to-completed">完成</button>
+</div>
+</div>`);
+
+            // 添加监听
+            function removeListener() {
+                $("a.site-tr-remove").click(function () {
+                    let that = $(this);
+                    that.parents("tr").remove();
+                });
+            }
+
+            removeListener();
+
+            $("a.add-tr").click(function () {
+                let that = $(this);
+                that.parents("tr").before(site_tr());
+                removeListener();
+            });
+
+            $("#btn-site-add-to-completed").click(() => {
+                config = $.extend(config, {
+                    name: $("input[name='name']").val(),
+                    domain: $("input[name='domain']").val(),
+                    info_parser: $("#site-info-parser").val(),
+                    search_parser: $("#site-search-parser").val(),
+                    rss_feed: $("#site-rss > tbody > tr.site-extension-info").map(function () {
+                        let that = $(this);
+                        return {
+                            enable: that.find("input[name='enable']").prop("checked"),
+                            link: that.find("input[name='link']").val(),
+                            label: that.find("input[name='label']").val()
+                        };
+                    }).get(),
+                    search_list: $("#site-advsearch > tbody > tr.site-extension-info").map(function () {
+                        let that = $(this);
+                        return {
+                            enable: that.find("input[name='enable']").prop("checked"),
+                            link: that.find("input[name='link']").val(),
+                            label: that.find("input[name='label']").val()
+                        };
+                    }).get(),
+                });
+
+                let exist_domain = system.config.sites.map(dic => dic.domain);
+                let cid = exist_domain.indexOf(config.domain);
+
+                if (cid > -1) {
+                    system.config.sites[cid] = config;
+                } else {
+                    system.config.sites.push(config);
+                }
+                system.template[config.template](config).reflush(() => {
+                    system.renderPersonInfo();
+                });
+                system.saveConfig(false, true);
+                SiteTable();
+                $("button[data-dismiss=\"modal\"]").click();
+            });
+        };
+
+        $("#sites-add").click(() => {
+            $("#site-modal > div.modal-dialog").html(() => {
+                let all_default_template = [];
+                for (let t in  system.template) {
+                    all_default_template.push(system.template[t]().config);
+                }
+
+                function f_click(l) {
+                    return l.map(i => `<label class="radio-inline"><input type="radio" name="radio-sites" value="${i}"> ${i}</label>`).join("");
+                }
+
+                return `<div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
+                                <h4 class="modal-title">选择新建站点类型</h4>
+                            </div>
+                            <div class="modal-body">
+                            <table class="table table-site">
+                            <thead>
+                            <tr>
+                            <th>类型</th>
+                                                <th>站点模板</th>
+</tr>
+                            <tbody>
+                            <tr><td>解析模板</td><td id="site-add-template">${f_click(all_default_template.filter(dic => dic.type === "template").map(dic => dic.template))}</td></tr>
+                            <tr><td>教育网站点</td><td id="site-add-cernet">${f_click(all_default_template.filter(dic => dic.type === "cernet").map(dic => dic.template))}</td></tr>
+                            <tr><td>公网</td><td id="site-add-china">${f_click(all_default_template.filter(dic => dic.type === "china").map(dic => dic.template))}</td></tr>
+                            <tr><td>国外站点</td><td id="site-add-foreign">${f_click(all_default_template.filter(dic => dic.type === "foreign").map(dic => dic.template))}</td></tr>
+                            <tr><td>BT站点</td><td id="site-add-bt">${f_click(all_default_template.filter(dic => dic.type === "bt").map(dic => dic.template))}</td></tr>
+</tbody>
+</table>
+                              
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                                <button type="button" class="btn btn-primary" id="btn-site-add-to-option">下一步</button>
+                            </div>
+                        </div>`
+            });
+
+            $("#btn-site-add-to-option").click(() => {
+                // 获取用户在第一个窗口的输入值
+                let selected_template = $("input[name='radio-sites']:checked").val();
+                if (selected_template !== undefined) {
+                    let def_config = system.template[selected_template]().config;
+                    render_site_html(def_config);
+                }
+            });
+            $("#site-modal").modal();
+        })
+    };
     system.renderOther = () =>  {
         system.loadScript("static/lib/crypto/crypto-js.min.js");
         system.loadScript("static/lib/filesaver/FileSaver.js");

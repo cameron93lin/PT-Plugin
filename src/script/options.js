@@ -77,19 +77,22 @@
             let site_data = site_list.map(site => {
                 let rObj = user_info.filter(dic => dic.site === site).sort((a, b) => b.updateat - a.updateat)[0]; // 获取最新的信息
                 let site_info = system.config.sites.filter(dic => dic.name === site)[0];   // 获取站点信息
-                rObj["domain"] = site_info ? site_info.domain : "#";
+                if (site_info) {
+                    rObj["domain"] = site_info.domain;
+                    rObj["enable"] = site_info.info;
+                }
                 return rObj;
             });
             show_html = site_data.reduce((a,b) => {
-                return a+= `<tr>
+                return a += b.enable ? `<tr>
 <td><img src="${b.domain}favicon.ico" width="16px" height="16px"><a href="${b.domain}" target="_blank">${b.site}</a></td>
 <td>${b.uid}</td><td>${b.username}</td>
 <td>${FileBytestoSize(b.uploaded)}</td><td>${FileBytestoSize(b.downloaded)}</td><td>${b.ratio}</td><td>${b.bonus}</td>
 <td>${b.seedcount}</td><td>${FileBytestoSize(b.seedsize)}</td>
 <td>${b.seedtime}</td><td>${b.leechtime}</td>
 <td>${b.class}</td><td>${Date.create(b.updateat).toLocaleString()}</td>
-</tr>`
-            },"");
+</tr>` : ""
+            }, "");
         }
 
         $("#overview-data").html(show_html);
@@ -275,50 +278,48 @@
 
         $("#server-add").click(() => {
             $("#server-modal > div.modal-dialog").html(`<div class="modal-content" id="server-add-modal-type">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
-                                <h4 class="modal-title">选择新建BT客户端类型</h4>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="icon icon-server"></i></span>
-                                            <input type="text" class="form-control" placeholder="BT客户端标签" id="tab_title">
-                                        </div>
-                                        <h2></h2>
-                                        <select data-placeholder="请选择BT客户端类型" class="chosen-select form-control" id="tab_client">
-                                            <option value=""></option>
-                                            <option>Buffalo WebUI (OLD!)</option>
-                                            <option>Deluge WebUI</option>
-                                            <option>pyrt WebUI</option>
-                                            <option>qBittorrent WebUI</option>
-                                            <option>ruTorrent WebUI</option>
-                                            <option>Torrentflux WebUI</option>
-                                            <option>Transmission WebUI</option>
-                                            <option>uTorrent WebUI</option>
-                                            <option>Vuze SwingUI</option>
-                                            <option>Vuze HTML WebUI</option>
-                                            <option>Vuze Remote WebUI</option>
-                                            <option>Tixati WebUI</option>
-                                            <option>Hadouken WebUI</option>
-                                            <option>NodeJS-rTorrent WebUI</option>
-                                            <option>Synology WebUI</option>
-                                            <option>flood WebUI</option>
-                                            <option>QNAP DownloadStation</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
-                                <button type="button" class="btn btn-primary" id="btn-client-add-to-option">下一步</button>
-                            </div>
-                        </div>`);
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span>
+	</button>
+	<h4 class="modal-title">选择新建BT客户端类型</h4>
+</div>
+<div class="modal-body">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="input-group"> <span class="input-group-addon"><i class="icon icon-server"></i></span>
+				<input type="text" class="form-control" placeholder="BT客户端标签" id="tab_title">
+			</div>
+			<h2></h2>
+			<select data-placeholder="请选择BT客户端类型" class="chosen-select form-control" id="tab_client">
+				<option value=""></option>
+				<option>Buffalo WebUI (OLD!)</option>
+				<option>Deluge WebUI</option>
+				<option>pyrt WebUI</option>
+				<option>qBittorrent WebUI</option>
+				<option>ruTorrent WebUI</option>
+				<option>Torrentflux WebUI</option>
+				<option>Transmission WebUI</option>
+				<option>uTorrent WebUI</option>
+				<option>Vuze SwingUI</option>
+				<option>Vuze HTML WebUI</option>
+				<option>Vuze Remote WebUI</option>
+				<option>Tixati WebUI</option>
+				<option>Hadouken WebUI</option>
+				<option>NodeJS-rTorrent WebUI</option>
+				<option>Synology WebUI</option>
+				<option>flood WebUI</option>
+				<option>QNAP DownloadStation</option>
+			</select>
+		</div>
+	</div>
+</div>
+<div class="modal-footer">
+	<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+	<button type="button" class="btn btn-primary" id="btn-client-add-to-option">下一步</button>
+</div></div>`);
 
             $('select.chosen-select').chosen({
                 no_results_text: '没有找到',    // 当检索时没有找到匹配项时显示的提示文本
-                disable_search_threshold: 10, // 10 个以下的选择项则不显示检索框
                 search_contains: true,         // 从任意位置开始检索
                 width: "100%"
             });
@@ -350,20 +351,20 @@
 <td>${dic.domain}</td>
 <td>
 <div class="switch switch-inline">
-  <input type="checkbox" name="info" ${dic.info ? "checked" : ""}>
+  <input type="checkbox" name="info" data-id="${index}" ${dic.info ? "checked" : ""}>
   <label>个人信息&nbsp;&nbsp;&nbsp;</label>
 </div>
 <div class="switch switch-inline">
-  <input type="checkbox" name="rss" ${dic.rss ? "checked" : ""}>
+  <input type="checkbox" name="rss" data-id="${index}" ${dic.rss ? "checked" : ""}>
   <label>RSS&nbsp;&nbsp;&nbsp;</label>
 </div>
 <div class="switch switch-inline" >
-  <input type="checkbox" name="search" ${dic.search ? "checked" : ""}>
+  <input type="checkbox" name="search" data-id="${index}" ${dic.search ? "checked" : ""}>
   <label>聚合搜索&nbsp;&nbsp;&nbsp;</label>
 </div>
 </div>
 <div class="switch switch-inline">
-  <input type="checkbox" name="signin" ${dic.signin ? "checked" : ""}>
+  <input type="checkbox" name="signin" data-id="${index}" ${dic.signin ? "checked" : ""}>
   <label>签到&nbsp;&nbsp;&nbsp;</label>
 </div>
 </td>
@@ -380,10 +381,15 @@
 
             $(".sites-edit").click(function () {
                 let that = $(this);
-                let sid = that.attr("data-id");
-                let config = system.config.sites[sid];
+                let config = system.config.sites[that.attr("data-id")];
                 render_site_html(config);
                 $("#site-modal").modal();
+            });
+
+            $("#sites-list input[type='checkbox']").click(function () {
+                let that = $(this);
+                system.config.sites[that.attr("data-id")][that.attr("name")] = that.prop("checked");
+                system.saveConfig();
             });
 
             $(".sites-delete").click(function () {
@@ -419,6 +425,7 @@
 </tr>`
             };
 
+            let signin_parser = config.signin_parser || `$.get('${config.domain}')`;
             $("#site-modal > div.modal-dialog").html(`<div class="modal-content" id="site-modal-option">
 <div class="modal-header">
 	<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">关闭</span></button>
@@ -514,10 +521,6 @@
 <hr>
 <p>站点搜索页解析方法，除非你是从DIY新建或者已有解析方法不能满足使用，否则留空即可。</p>
 <textarea class="form-control" id="site-search-parser" rows="6"></textarea>
-      
-      
-      
-      
 </div>
     </div>
   </div>
@@ -530,7 +533,10 @@
       </h4>
     </div>
     <div id="collapseFive" class="panel-collapse collapse">
-      <div class="panel-body">暂不支持</div>
+      <div class="panel-body">
+      暂不支持
+      <textarea class="form-control" id="site-signin-parser" rows="6">${signin_parser}</textarea>
+      </div>
     </div>
   </div>
 </div>
@@ -589,10 +595,11 @@
                 } else {
                     system.config.sites.push(config);
                 }
+                system.saveConfig();
                 system.template[config.template](config).reflush(() => {
                     system.renderPersonInfo();
                 });
-                system.saveConfig(false, true);
+
                 SiteTable();
                 $("button[data-dismiss=\"modal\"]").click();
             });

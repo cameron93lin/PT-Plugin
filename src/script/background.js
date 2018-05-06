@@ -198,8 +198,7 @@ system.createContextMenus();
 // 用于接收页面发送过的消息
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     system.getConfig(config => {
-        console.log(message, sender, callback);
-        switch (message.action) {
+        switch (request.action) {
             case "constructContextMenu":  // 重写右键菜单
                 system.createContextMenus();
                 break;

@@ -1,4 +1,5 @@
 let system = {
+    reflushconter: 0, //个人信息页站点信息刷新计数
     log: [],  // 脚本日常使用时产生的日志信息
     info_record: [
         /** 需要插入的记录信息示例
@@ -107,6 +108,10 @@ let system = {
 
     saveRecord(new_record) {
         let info_record = system.getRecord();
+        if (info_record == null) {  // 初始化info_record
+            localStorage.setItem("info_record", "[]");
+            info_record = system.getRecord()
+        }
         if (typeof new_record !== "undefined") {
             info_record.push(new_record);
         }

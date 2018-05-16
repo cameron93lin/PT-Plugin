@@ -27,6 +27,10 @@ system.template.DIY = conf => {
         ],
         "signin": true,   // 自动签到插件启用状态（站点全局）
         "signin_parser": "",   // 签到方法（完整）
+        "selector_time": "td.rowfollow:contains('做种时间')",
+        "selector_bonus": "tr:contains('魔力')",
+        "selector_info_block": "#info_block",
+        link_usertorrentlist_f: () => `${config.domain}userdetails.php?id=${config.info_data.id}`,
     },conf);
 
     // 搜索方法底层
@@ -148,11 +152,18 @@ system.template.NexusPHP = conf => {
     };
 
     this.reflush_nexusphp = () => {
-        let rObj = {site: config.name, uid: config.info_data.id};
+        let rObj = {
+            site: config.name, 
+            uid: config.info_data.id,
+            selector_time: config.selector_time,
+            selector_info_block: config.selector_info_block,
+            selector_bonus: config.selector_bonus,
+            link_usertorrentlist_f: config.link_usertorrentlist_f,
+        };
         let get_userdetails = makeRequest("GET", link_userdetails_f()).then(parser => {
-            let info_block = parser.page.find(selector_info_block);
+            let info_block = parser.page.find(rObj.selector_info_block);
             rObj["username"] = info_block.find(selector_username_in_info_block).first().text().trim();
-            rObj["bonus"] = parser.page.find(selector_bonus).last().text().match(/[\d.,]+/)[0];
+            rObj["bonus"] = parser.page.find(rObj.selector_bonus).last().text().match(/[\d.,]+/)[0];
             rObj["class"] = info_block.find(selector_user_level).attr("class").match(/(.+?)_Name/)[1];
 
             let up_dl_ratio_block = parser.page.find("td.rowfollow:contains('分享率')");
@@ -168,8 +179,7 @@ system.template.NexusPHP = conf => {
                 rObj["uploaded"] = FileSizetoBytes(info_block_text.match(/上[传傳]量.+?([\d.]+ [TGMK]?i?B)/)[1]);
                 rObj["downloaded"] = FileSizetoBytes(info_block_text.match(/下[载載]量.+?([\d.]+ [TGMK]?i?B)/)[1]);
             }
-
-            let seed_info_block = parser.page.find(selector_time);
+            let seed_info_block = parser.page.find(rObj.selector_time);
             let seed_info_group = seed_info_block.text().match(/(做种时间|做種時間).+?([\d天:]+).+?(下载时间|下載時間).+?([\d天:]+)/);
             if (seed_info_group) {
                 rObj["seedtime"] = seed_info_group[2];
@@ -190,13 +200,14 @@ system.template.NexusPHP = conf => {
         Promise.all([get_userdetails, get_usertorrentlist]).then(() => {
             rObj["updateat"] = Date.now();
             system.saveRecord(rObj);
+            system.reflushconter++;
         });
     };
 
     this.reflush = (callback) => {
         if(!config.info_data.id) {  // 不存在用户id信息
             makeRequest("GET", config.domain).then(parser => {
-                let user_tag = parser.page.find(`${selector_info_block} ${selector_username_in_info_block}`);
+                let user_tag = parser.page.find(`${config.selector_info_block} ${selector_username_in_info_block}`);
                 config.info_data.id = user_tag.attr("href").match(/\d+/)[0];
                 saveConfig();
                 reflush_nexusphp();
@@ -231,12 +242,12 @@ system.template.BYR = conf => {
 
 system.template.WHUPT = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_info_block = "#header-info";
     this.config = $.extend(this.config,{
         name:"WHUPT",
         domain:"https://pt.whu.edu.cn/",
         type: "cernet",
         template: "WHUPT",
+        selector_info_block: "#header-info",
         search_list:[
             {
                 "link": "https://pt.whu.edu.cn/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -266,12 +277,12 @@ system.template.TJUPT = conf => {
 
 system.template.MTPT = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_bonus = "tr:contains('麦粒')";
     this.config = $.extend(this.config,{
         name:"MTPT",
         domain:"https://pt.nwsuaf6.edu.cn/",
         type: "cernet",
         template: "MTPT",
+        selector_bonus: "tr:contains('麦粒')",
         search_list:[
             {
                 "link": "https://pt.nwsuaf6.edu.cn/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -302,12 +313,12 @@ system.template.XAUAT6 = conf => {
 
 system.template.NYPT = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_bonus = "tr:contains('魔力豆')";
     this.config = $.extend(this.config, {
         name: "NYPT",
         domain: "https://nanyangpt.com/",
         type: "cernet",
         template: "NYPT",
+        selector_bonus: "tr:contains('魔力豆')",
         search_list: [
             {
                 "link": "https://nanyangpt.com/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -321,13 +332,13 @@ system.template.NYPT = conf => {
 
 system.template.SJTU = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_info_block = "#userbar";
-    this.link_usertorrentlist_f = () => `${config.domain}viewusertorrents.php?id=${config.info_data.id}&show=seeding`;
     this.config = $.extend(this.config, {
         name: "SJTU",
         domain: "https://pt.sjtu.edu.cn/",
         type: "cernet",
         template: "SJTU",
+        selector_info_block: "#userbar",
+        link_usertorrentlist_f: () => `${config.domain}viewusertorrents.php?id=${config.info_data.id}&show=seeding`,
         search_list: [
             {
                 "link": "https://pt.sjtu.edu.cn/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -341,12 +352,12 @@ system.template.SJTU = conf => {
 
 system.template.HUDBT = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_info_block = "#header-userinfo";
     this.config = $.extend(this.config, {
         name: "HUDBT",
         domain: "https://hudbt.hust.edu.cn/",
         type: "cernet",
         template: "HUDBT",
+        selector_info_block: "#header-userinfo",
         search_list: [
             {
                 "link": "https://hudbt.hust.edu.cn/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -455,12 +466,12 @@ system.template.HDU = conf => {
 
 system.template.JoyHD = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_bonus = "tr:contains('银元')";
     this.config = $.extend(this.config, {
         name: "JoyHD",
         domain: "https://www.joyhd.net/",
         type: "china",
         template: "JoyHD",
+        selector_bonus: "tr:contains('银元')",
         search_list: [
             {
                 "link": "https://www.joyhd.net/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -565,12 +576,12 @@ system.template.TCCF = conf => {
 
 system.template.U2 = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_bonus = "tr:contains('UCoin')";
     this.config = $.extend(this.config, {
         name: "U2",
         domain: "https://u2.dmhy.org/",
         type: "china",
         template: "U2",
+        selector_bonus: "tr:contains('UCoin')",
         search_list: [
             {
                 "link": "https://u2.dmhy.org/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -603,12 +614,12 @@ system.template.CMCT = conf => {
 // TODO MT的做种信息
 system.template.MTeam = conf => {
     system.template.NexusPHP.apply(this);
-    this.selector_time = "td.rowfollow:contains('做種時間')";
     this.config = $.extend(this.config, {
         name: "MTeam",
         domain: "https://tp.m-team.cc/",
         type: "china",
         template: "MTeam",
+        selector_time: "td.rowfollow:contains('做種時間')",
         search_list: [
             {
                 "link": "https://tp.m-team.cc/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
@@ -624,6 +635,44 @@ system.template.MTeam = conf => {
     }, conf);
     return this
 };
+
+system.template.GZT = conf => {
+    system.template.NexusPHP.apply(this);
+    this.config = $.extend(this.config, {
+        name: "GZT",
+        domain: "https://pt.gztown.net/",
+        type: "china",
+        template: "GZT",
+        search_list: [
+            {
+                "link": "https://pt.gztown.net/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
+                "enable": true,  // 该搜索链接启用状态
+                "label": "GZT"  // 标签，未设置时为站点名称（可以使用html代码，例如 `<span class="label">示例标签</span>`）
+            },
+        ]
+    }, conf);
+    return this
+};
+
+// TODO Test...........
+system.template.BTSchool = conf => {
+    system.template.NexusPHP.apply(this);
+    this.config = $.extend(this.config, {
+        name: "BTSchool",
+        domain: "http://pt.btschool.net",
+        type: "china",
+        template: "BTSchool",
+        search_list: [
+            {
+                "link": "https://pt.btschool.net/torrents.php?search=$key$",   // 搜索链接   可以使用的统配符有 $key$
+                "enable": true,  // 该搜索链接启用状态
+                "label": "BTSchool"  // 标签，未设置时为站点名称（可以使用html代码，例如 `<span class="label">示例标签</span>`）
+            },
+        ]
+    }, conf);
+    return this
+};
+
 
 /*
 for(let t in system.template) {

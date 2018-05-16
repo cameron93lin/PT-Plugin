@@ -394,6 +394,7 @@
 
             $(".sites-delete").click(function () {
                 let that = $(this);
+                chrome.storage.sync.set({config: system.config}); 
                 system.removeRecord(system.config.sites[that.attr("data-id")].name);
                 system.config.sites.splice(that.attr("data-id"), 1);
                 system.saveConfig(false, true);
@@ -730,6 +731,20 @@
         });
     };
 
+    system.flushall = () => {
+        var intervalId = 1;
+        for (let site in system.config.sites){
+            system.template[system.config.sites[site].template](system.config.sites[site]).reflush();
+        }
+        intervalId = setInterval(
+                        function(){
+                            if (system.reflushconter >= system.config.sites.length){
+                                system.renderPersonInfo();
+                                clearInterval(intervalId);
+                            }
+                        }, 1000);
+    };
+
     $(document).ready(function() {
         system.getConfig(() => { // 在插件后台配置页面渲染以及DOM监听方法（从左到右，从上到下）
             system.renderExtension();  // 扩展插件
@@ -743,6 +758,10 @@
             system.renderOther();  // 其他设定
             system.renderLog();  // 日志信息
             new Clipboard('.btn-clipboard');
+        });
+        let flushbtn = $("#overview-flush");
+        flushbtn.click(() => {
+                system.flushall();
         });
     });
 })(jQuery);

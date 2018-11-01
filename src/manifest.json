@@ -49,6 +49,5 @@
         "script/background.js"
       ]
     }
-  ],
-  "content_security_policy": "script-src 'self' 'unsafe-eval' javascript:void(0); object-src 'self'"
+  ]
 }

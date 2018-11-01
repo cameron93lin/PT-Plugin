@@ -193,7 +193,12 @@ system.template.NexusPHP = conf => {
             for (let i = 0; i < tr_list.length; i++) {
                 let tr = tr_list.eq(i);
                 let size_td = tr.find("> td:eq(2)");
-                seedsize += FileSizetoBytes(size_td.text().match(/([\d.]+)[^TGMK].?([TGMK]?i?B)/)[0]);
+                if(size_td.text()==''){
+                    seedsize=0;
+                }
+                else{
+                    seedsize += FileSizetoBytes(size_td.text().match(/([\d.]+)[^TGMK].?([TGMK]?i?B)/)[0]);
+                }
             }
             rObj["seedsize"] = seedsize;
         });
@@ -659,7 +664,7 @@ system.template.BTSchool = conf => {
     system.template.NexusPHP.apply(this);
     this.config = $.extend(this.config, {
         name: "BTSchool",
-        domain: "http://pt.btschool.net",
+        domain: "http://pt.btschool.net/",
         type: "china",
         template: "BTSchool",
         search_list: [
